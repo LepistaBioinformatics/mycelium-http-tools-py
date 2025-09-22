@@ -1032,3 +1032,290 @@ class TestProfile:
             f"2:tenantId:{tenant_id2}",
             f"3:tenantId:{tenant_id3}",
         ]
+
+    def test_with_roles_without_licensed_resources(self):
+        """Test with_roles when licensed_resources is None"""
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            licensed_resources=None,
+        )
+
+        roles = ["admin", "user"]
+        result = profile.with_roles(roles)
+
+        # Should return a new profile with None licensed_resources
+        assert result.licensed_resources is None
+        assert result.filtering_state == ["1:role:admin,user"]
+        assert result.acc_id == profile.acc_id
+        assert result.is_subscription == profile.is_subscription
+
+    def test_with_roles_with_licensed_resources_no_matches(self):
+        """Test with_roles when no licensed resources match the roles"""
+        # Create licensed resources with different roles
+        licensed_resource = LicensedResource(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            sys_acc=False,
+            tenant_id=UUID("323e4567-e89b-12d3-a456-426614174002"),
+            acc_name="Test Account",
+            role="manager",  # Different role
+            role_id=UUID("423e4567-e89b-12d3-a456-426614174003"),
+            perm=Permission.READ,
+            verified=True,
+        )
+
+        licensed_resources = LicensedResources(records=[licensed_resource])
+
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            licensed_resources=licensed_resources,
+        )
+
+        roles = ["admin", "user"]  # Different roles
+        result = profile.with_roles(roles)
+
+        # Should return a new profile with None licensed_resources (no matches)
+        assert result.licensed_resources is None
+        assert result.filtering_state == ["1:role:admin,user"]
+        assert result.acc_id == profile.acc_id
+
+    def test_with_roles_with_licensed_resources_with_matches(self):
+        """Test with_roles when licensed resources match the roles"""
+        roles = ["admin", "user"]
+
+        # Create licensed resources with matching roles
+        licensed_resource1 = LicensedResource(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            sys_acc=False,
+            tenant_id=UUID("323e4567-e89b-12d3-a456-426614174002"),
+            acc_name="Test Account 1",
+            role="admin",  # Matching role
+            role_id=UUID("423e4567-e89b-12d3-a456-426614174003"),
+            perm=Permission.READ,
+            verified=True,
+        )
+
+        # Create licensed resources with non-matching roles
+        licensed_resource2 = LicensedResource(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            sys_acc=False,
+            tenant_id=UUID("323e4567-e89b-12d3-a456-426614174002"),
+            acc_name="Test Account 2",
+            role="manager",  # Non-matching role
+            role_id=UUID("523e4567-e89b-12d3-a456-426614174004"),
+            perm=Permission.WRITE,
+            verified=True,
+        )
+
+        # Create licensed resources with another matching role
+        licensed_resource3 = LicensedResource(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            sys_acc=False,
+            tenant_id=UUID("323e4567-e89b-12d3-a456-426614174002"),
+            acc_name="Test Account 3",
+            role="user",  # Matching role
+            role_id=UUID("623e4567-e89b-12d3-a456-426614174005"),
+            perm=Permission.READ,
+            verified=True,
+        )
+
+        licensed_resources = LicensedResources(
+            records=[licensed_resource1, licensed_resource2, licensed_resource3]
+        )
+
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            licensed_resources=licensed_resources,
+        )
+
+        result = profile.with_roles(roles)
+
+        # Should return a new profile with filtered licensed_resources
+        assert result.licensed_resources is not None
+        assert len(result.licensed_resources.records) == 2
+        assert licensed_resource1 in result.licensed_resources.records
+        assert licensed_resource3 in result.licensed_resources.records
+        assert licensed_resource2 not in result.licensed_resources.records
+        assert result.filtering_state == ["1:role:admin,user"]
+        assert result.acc_id == profile.acc_id
+
+    def test_with_roles_updates_filtering_state(self):
+        """Test that with_roles properly updates the filtering_state"""
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            filtering_state=["existing_filter"],
+        )
+
+        roles = ["admin", "user"]
+        result = profile.with_roles(roles)
+
+        # Should preserve existing filters and add role filter
+        assert result.filtering_state == ["existing_filter", "2:role:admin,user"]
+
+    def test_with_roles_adds_incremental_role_filter(self):
+        """Test that with_roles adds role filter incrementally"""
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            filtering_state=["existing_filter", "2:role:old-role"],
+        )
+
+        new_roles = ["admin", "user"]
+        result = profile.with_roles(new_roles)
+
+        # Should add the new role filter incrementally (not replace)
+        assert result.filtering_state == [
+            "existing_filter",
+            "2:role:old-role",
+            "3:role:admin,user",
+        ]
+
+    def test_with_roles_single_role(self):
+        """Test with_roles with a single role"""
+        # Create licensed resources
+        licensed_resource = LicensedResource(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            sys_acc=False,
+            tenant_id=UUID("323e4567-e89b-12d3-a456-426614174002"),
+            acc_name="Test Account",
+            role="admin",
+            role_id=UUID("423e4567-e89b-12d3-a456-426614174003"),
+            perm=Permission.READ,
+            verified=True,
+        )
+
+        licensed_resources = LicensedResources(records=[licensed_resource])
+
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            licensed_resources=licensed_resources,
+        )
+
+        roles = ["admin"]  # Single role
+        result = profile.with_roles(roles)
+
+        # Should return a new profile with filtered licensed_resources
+        assert result.licensed_resources is not None
+        assert len(result.licensed_resources.records) == 1
+        assert result.licensed_resources.records[0] == licensed_resource
+        assert result.filtering_state == ["1:role:admin"]
+
+    def test_with_roles_empty_list(self):
+        """Test with_roles with an empty roles list"""
+        # Create licensed resources
+        licensed_resource = LicensedResource(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            sys_acc=False,
+            tenant_id=UUID("323e4567-e89b-12d3-a456-426614174002"),
+            acc_name="Test Account",
+            role="admin",
+            role_id=UUID("423e4567-e89b-12d3-a456-426614174003"),
+            perm=Permission.READ,
+            verified=True,
+        )
+
+        licensed_resources = LicensedResources(records=[licensed_resource])
+
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            licensed_resources=licensed_resources,
+        )
+
+        roles = []  # Empty list
+        result = profile.with_roles(roles)
+
+        # Should return a new profile with None licensed_resources (no matches)
+        assert result.licensed_resources is None
+        assert result.filtering_state == ["1:role:"]
+
+    def test_with_roles_incremental_filtering_cascade(self):
+        """Test incremental filtering state with roles as described in documentation"""
+        # Start with empty filtering state
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            filtering_state=[],
+        )
+
+        # First filter: tenant
+        tenant_id = UUID("123e4567-e89b-12d3-a456-426614174000")
+        result1 = profile.on_tenant(tenant_id)
+        assert result1.filtering_state == [f"1:tenantId:{tenant_id}"]
+
+        # Second filter: roles (simulating permission filter would be "2:permission:1")
+        roles = ["admin", "user"]
+        result2 = result1.with_roles(roles)
+        assert result2.filtering_state == [
+            f"1:tenantId:{tenant_id}",
+            "2:role:admin,user",
+        ]
+
+        # Third filter: more roles
+        more_roles = ["manager"]
+        result3 = result2.with_roles(more_roles)
+        assert result3.filtering_state == [
+            f"1:tenantId:{tenant_id}",
+            "2:role:admin,user",
+            "3:role:manager",
+        ]

@@ -95,6 +95,54 @@ class Profile(BaseModel):
             }
         )
 
+    def with_roles(self, roles: list[str]) -> Self:
+        """Filter the licensed resources to the specified roles.
+
+        This method should be used to filter licensed resources to only include
+        those that match any of the specified roles.
+
+        Args:
+            roles: List of role names to filter by
+
+        Returns:
+            A new Profile instance with filtered licensed resources
+        """
+        # Filter the licensed resources to the roles
+        licensed_resources = None
+        if self.licensed_resources is not None:
+            # Get all licensed resources
+            all_resources = self.licensed_resources.to_licenses_vector()
+
+            # Filter by roles (any role that matches any of the specified roles)
+            filtered_resources = [
+                resource for resource in all_resources if resource.role in roles
+            ]
+
+            # Create new LicensedResources if we have filtered results
+            if filtered_resources:
+                licensed_resources = LicensedResources(records=filtered_resources)
+
+        # Update filtering state to track the role filter (incremental)
+        updated_filtering_state = (
+            self.filtering_state.copy() if self.filtering_state else []
+        )
+
+        # Get the next filter number
+        next_filter_number = len(updated_filtering_state) + 1
+        roles_str = ",".join(roles)
+        role_filter = f"{next_filter_number}:role:{roles_str}"
+
+        # Add the new filter (incremental behavior)
+        updated_filtering_state.append(role_filter)
+
+        # Return the new profile
+        return self.model_copy(
+            update={
+                "licensed_resources": licensed_resources,
+                "filtering_state": updated_filtering_state,
+            }
+        )
+
     # --------------------------------------------------------------------------
     # PRIVATE METHODS
     # --------------------------------------------------------------------------
