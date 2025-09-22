@@ -154,6 +154,53 @@ class Profile(BaseModel):
             }
         )
 
+    def on_account(self, account_id: UUID) -> Self:
+        """Filter the licensed resources to the account.
+
+        This method should be used to filter licensed resources to the account
+        that the profile is currently working on.
+
+        Args:
+            account_id: The UUID of the account to filter by
+
+        Returns:
+            A new Profile instance with filtered licensed resources
+        """
+        # Filter the licensed resources to the account
+        licensed_resources = None
+        if self.licensed_resources is not None:
+            # Get all licensed resources
+            all_resources = self.licensed_resources.to_licenses_vector()
+
+            # Filter by account_id
+            filtered_resources = [
+                resource for resource in all_resources if resource.acc_id == account_id
+            ]
+
+            # Create new LicensedResources if we have filtered results
+            if filtered_resources:
+                licensed_resources = LicensedResources(records=filtered_resources)
+
+        # Update filtering state to track the account filter (incremental)
+        updated_filtering_state = (
+            self.filtering_state.copy() if self.filtering_state else []
+        )
+
+        # Get the next filter number
+        next_filter_number = len(updated_filtering_state) + 1
+        account_filter = f"{next_filter_number}:accountId:{account_id}"
+
+        # Add the new filter (incremental behavior)
+        updated_filtering_state.append(account_filter)
+
+        # Return the new profile
+        return self.model_copy(
+            update={
+                "licensed_resources": licensed_resources,
+                "filtering_state": updated_filtering_state,
+            }
+        )
+
     def get_related_account_or_error(self) -> RelatedAccounts:
         """Get related accounts based on profile privileges.
 
