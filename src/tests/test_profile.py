@@ -368,15 +368,21 @@ class TestProfile:
         result = profile.with_read_access()
 
         # Should return a copy of the profile
-        assert result != profile  # Different objects
+        assert result is not profile  # Different objects
         assert result.acc_id == profile.acc_id
         assert result.is_subscription == profile.is_subscription
         assert result.licensed_resources is not None
 
-        # Should only contain READ permission resources
-        assert len(result.licensed_resources.records) == 1
-        assert result.licensed_resources.records[0].perm == Permission.READ
-        assert result.licensed_resources.records[0].acc_name == "Read Account"
+        # Should contain both READ and WRITE permission resources (since WRITE >= READ)
+        assert len(result.licensed_resources.records) == 2
+
+        # Check that both resources are present
+        perms = [record.perm for record in result.licensed_resources.records]
+        assert Permission.READ in perms
+        assert Permission.WRITE in perms
+
+        # Check that urls is set to None
+        assert result.licensed_resources.urls is None
 
     def test_with_write_access_with_licensed_resources(self):
         """Test with_write_access when licensed_resources is present"""
@@ -420,15 +426,203 @@ class TestProfile:
         result = profile.with_write_access()
 
         # Should return a copy of the profile
-        assert result != profile  # Different objects
+        assert result is not profile  # Different objects
         assert result.acc_id == profile.acc_id
         assert result.is_subscription == profile.is_subscription
         assert result.licensed_resources is not None
 
-        # Should only contain WRITE permission resources
+        # Should only contain WRITE permission resources (since READ < WRITE)
         assert len(result.licensed_resources.records) == 1
         assert result.licensed_resources.records[0].perm == Permission.WRITE
         assert result.licensed_resources.records[0].acc_name == "Write Account"
+
+        # Check that urls is set to None
+        assert result.licensed_resources.urls is None
+
+    def test_with_read_access_with_mixed_permissions(self):
+        """Test with_read_access with multiple resources having different permissions"""
+        read_resource1 = LicensedResource(
+            tenant_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            acc_id=UUID("987fcdeb-51a2-43d1-9f12-345678901234"),
+            role_id=UUID("456e7890-e89b-12d3-a456-426614174567"),
+            role="admin",
+            perm=Permission.READ,
+            sys_acc=True,
+            acc_name="Read Account 1",
+            verified=True,
+        )
+
+        read_resource2 = LicensedResource(
+            tenant_id=UUID("223e4567-e89b-12d3-a456-426614174001"),
+            acc_id=UUID("887fcdeb-51a2-43d1-9f12-345678901235"),
+            role_id=UUID("556e7890-e89b-12d3-a456-426614174568"),
+            role="viewer",
+            perm=Permission.READ,
+            sys_acc=False,
+            acc_name="Read Account 2",
+            verified=False,
+        )
+
+        write_resource = LicensedResource(
+            tenant_id=UUID("323e4567-e89b-12d3-a456-426614174002"),
+            acc_id=UUID("787fcdeb-51a2-43d1-9f12-345678901236"),
+            role_id=UUID("656e7890-e89b-12d3-a456-426614174569"),
+            role="editor",
+            perm=Permission.WRITE,
+            sys_acc=False,
+            acc_name="Write Account",
+            verified=True,
+        )
+
+        licensed_resources = LicensedResources(
+            records=[read_resource1, read_resource2, write_resource]
+        )
+
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            licensed_resources=licensed_resources,
+        )
+
+        result = profile.with_read_access()
+
+        # Should contain all resources since all have READ or higher permission
+        assert len(result.licensed_resources.records) == 3
+
+        # Check that all resources are present
+        perms = [record.perm for record in result.licensed_resources.records]
+        assert perms.count(Permission.READ) == 2
+        assert perms.count(Permission.WRITE) == 1
+
+        # Check that urls is set to None
+        assert result.licensed_resources.urls is None
+
+    def test_with_write_access_with_mixed_permissions(self):
+        """Test with_write_access with multiple resources having different permissions"""
+        read_resource1 = LicensedResource(
+            tenant_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            acc_id=UUID("987fcdeb-51a2-43d1-9f12-345678901234"),
+            role_id=UUID("456e7890-e89b-12d3-a456-426614174567"),
+            role="admin",
+            perm=Permission.READ,
+            sys_acc=True,
+            acc_name="Read Account 1",
+            verified=True,
+        )
+
+        read_resource2 = LicensedResource(
+            tenant_id=UUID("223e4567-e89b-12d3-a456-426614174001"),
+            acc_id=UUID("887fcdeb-51a2-43d1-9f12-345678901235"),
+            role_id=UUID("556e7890-e89b-12d3-a456-426614174568"),
+            role="viewer",
+            perm=Permission.READ,
+            sys_acc=False,
+            acc_name="Read Account 2",
+            verified=False,
+        )
+
+        write_resource1 = LicensedResource(
+            tenant_id=UUID("323e4567-e89b-12d3-a456-426614174002"),
+            acc_id=UUID("787fcdeb-51a2-43d1-9f12-345678901236"),
+            role_id=UUID("656e7890-e89b-12d3-a456-426614174569"),
+            role="editor",
+            perm=Permission.WRITE,
+            sys_acc=False,
+            acc_name="Write Account 1",
+            verified=True,
+        )
+
+        write_resource2 = LicensedResource(
+            tenant_id=UUID("423e4567-e89b-12d3-a456-426614174003"),
+            acc_id=UUID("687fcdeb-51a2-43d1-9f12-345678901237"),
+            role_id=UUID("756e7890-e89b-12d3-a456-426614174570"),
+            role="admin",
+            perm=Permission.WRITE,
+            sys_acc=True,
+            acc_name="Write Account 2",
+            verified=False,
+        )
+
+        licensed_resources = LicensedResources(
+            records=[read_resource1, read_resource2, write_resource1, write_resource2]
+        )
+
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            licensed_resources=licensed_resources,
+        )
+
+        result = profile.with_write_access()
+
+        # Should only contain WRITE permission resources
+        assert len(result.licensed_resources.records) == 2
+
+        # Check that only WRITE resources are present
+        perms = [record.perm for record in result.licensed_resources.records]
+        assert perms.count(Permission.WRITE) == 2
+        assert Permission.READ not in perms
+
+        # Check that urls is set to None
+        assert result.licensed_resources.urls is None
+
+    def test_with_permission_clears_urls_field(self):
+        """Test that __with_permission methods clear the urls field"""
+        # Create licensed resources with both records and urls
+        read_resource = LicensedResource(
+            tenant_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            acc_id=UUID("987fcdeb-51a2-43d1-9f12-345678901234"),
+            role_id=UUID("456e7890-e89b-12d3-a456-426614174567"),
+            role="admin",
+            perm=Permission.READ,
+            sys_acc=True,
+            acc_name="Read Account",
+            verified=True,
+        )
+
+        licensed_resources = LicensedResources(
+            records=[read_resource],
+            urls=[
+                "https://localhost.local/tid/123e4567-e89b-12d3-a456-426614174000/aid/987fcdeb-51a2-43d1-9f12-345678901234/rid/456e7890-e89b-12d3-a456-426614174567?pr=admin:0&sys=1&v=1&name=UmVhZCBBY2NvdW50"
+            ],
+        )
+
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            licensed_resources=licensed_resources,
+        )
+
+        # Test with_read_access
+        result_read = profile.with_read_access()
+        assert result_read.licensed_resources.urls is None
+        assert result_read.licensed_resources.records is not None
+
+        # Test with_write_access
+        result_write = profile.with_write_access()
+        assert result_write.licensed_resources.urls is None
+        assert result_write.licensed_resources.records is not None
 
     def test_profile_equality(self):
         """Test Profile equality comparison"""
