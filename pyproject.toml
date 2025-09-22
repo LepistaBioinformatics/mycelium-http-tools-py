@@ -1,0 +1,43 @@
+[project]
+name = "mycelium-http-tools"
+version = "0.1.0"
+description = "A python library to integrate python APIs in Mycelium API Gateway"
+authors = [{ name = "Samuel Galvão Elias", email = "sgelias@outlook.com" }]
+license = { text = "Apache 2.0" }
+readme = "README.md"
+requires-python = ">=3.12,<4.0"
+
+dependencies = [
+    "pydantic (>=2.11.9,<3.0.0)",
+    "urllib3 (>=2.5.0,<3.0.0)",
+]
+
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.18.2",
+    "pre-commit>=4.3.0",
+    "commitizen>=4.9.1"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.pytest.ini_options]
+testpaths = ["src/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+commitizen = "^4.9.1"
+mypy = "^1.18.2"
+pre-commit = "^4.3.0"
+pytest = "^8.4.2"
