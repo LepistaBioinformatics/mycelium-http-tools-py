@@ -1626,3 +1626,272 @@ class TestProfile:
         assert result.type == "allowed_accounts"
         assert len(result.accounts) == 1
         assert result.accounts[0] == account_id
+
+    def test_on_account_without_licensed_resources(self):
+        """Test on_account without licensed resources"""
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            is_manager=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+        )
+
+        target_account_id = UUID("987fcdeb-51a2-43d1-9f12-345678901234")
+        result = profile.on_account(target_account_id)
+
+        # Should return a new profile with None licensed_resources
+        assert result.licensed_resources is None
+        assert result.filtering_state == [
+            "1:accountId:987fcdeb-51a2-43d1-9f12-345678901234"
+        ]
+        assert result.acc_id == profile.acc_id  # Original profile unchanged
+
+    def test_on_account_with_licensed_resources_no_matches(self):
+        """Test on_account with licensed resources but no matches"""
+        account_id1 = UUID("11111111-1111-1111-1111-111111111111")
+        account_id2 = UUID("22222222-2222-2222-2222-222222222222")
+        tenant_id = UUID("33333333-3333-3333-3333-333333333333")
+        role_id = UUID("44444444-4444-4444-4444-444444444444")
+
+        licensed_resource1 = LicensedResource(
+            acc_id=account_id1,
+            sys_acc=False,
+            tenant_id=tenant_id,
+            role_id=role_id,
+            acc_name="Account 1",
+            role="user",
+            perm=Permission.READ,
+            verified=True,
+        )
+
+        licensed_resource2 = LicensedResource(
+            acc_id=account_id2,
+            sys_acc=False,
+            tenant_id=tenant_id,
+            role_id=role_id,
+            acc_name="Account 2",
+            role="admin",
+            perm=Permission.WRITE,
+            verified=True,
+        )
+
+        licensed_resources = LicensedResources(
+            records=[licensed_resource1, licensed_resource2]
+        )
+
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            is_manager=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            licensed_resources=licensed_resources,
+        )
+
+        # Try to filter by an account that doesn't exist
+        target_account_id = UUID("99999999-9999-9999-9999-999999999999")
+        result = profile.on_account(target_account_id)
+
+        # Should return a new profile with None licensed_resources (no matches)
+        assert result.licensed_resources is None
+        assert result.filtering_state == [
+            "1:accountId:99999999-9999-9999-9999-999999999999"
+        ]
+        assert result.acc_id == profile.acc_id  # Original profile unchanged
+
+    def test_on_account_with_licensed_resources_with_matches(self):
+        """Test on_account with licensed resources with matches"""
+        account_id1 = UUID("11111111-1111-1111-1111-111111111111")
+        account_id2 = UUID("22222222-2222-2222-2222-222222222222")
+        tenant_id = UUID("33333333-3333-3333-3333-333333333333")
+        role_id = UUID("44444444-4444-4444-4444-444444444444")
+
+        licensed_resource1 = LicensedResource(
+            acc_id=account_id1,
+            sys_acc=False,
+            tenant_id=tenant_id,
+            role_id=role_id,
+            acc_name="Account 1",
+            role="user",
+            perm=Permission.READ,
+            verified=True,
+        )
+
+        licensed_resource2 = LicensedResource(
+            acc_id=account_id2,
+            sys_acc=False,
+            tenant_id=tenant_id,
+            role_id=role_id,
+            acc_name="Account 2",
+            role="admin",
+            perm=Permission.WRITE,
+            verified=True,
+        )
+
+        licensed_resources = LicensedResources(
+            records=[licensed_resource1, licensed_resource2]
+        )
+
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            is_manager=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            licensed_resources=licensed_resources,
+        )
+
+        # Filter by account_id1
+        result = profile.on_account(account_id1)
+
+        # Should return a new profile with filtered licensed resources
+        assert result.licensed_resources is not None
+        assert len(result.licensed_resources.to_licenses_vector()) == 1
+        assert result.licensed_resources.to_licenses_vector()[0].acc_id == account_id1
+        assert result.filtering_state == [f"1:accountId:{account_id1}"]
+        assert result.acc_id == profile.acc_id  # Original profile unchanged
+
+    def test_on_account_updates_filtering_state(self):
+        """Test that on_account updates filtering state"""
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            is_manager=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            filtering_state=["existing_filter"],
+        )
+
+        target_account_id = UUID("987fcdeb-51a2-43d1-9f12-345678901234")
+        result = profile.on_account(target_account_id)
+
+        assert result.filtering_state == [
+            "existing_filter",
+            f"2:accountId:{target_account_id}",
+        ]
+
+    def test_on_account_adds_incremental_account_filter(self):
+        """Test that on_account adds incremental account filter"""
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            is_manager=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            filtering_state=["1:tenantId:old-tenant-id"],
+        )
+
+        target_account_id = UUID("987fcdeb-51a2-43d1-9f12-345678901234")
+        result = profile.on_account(target_account_id)
+
+        assert result.filtering_state == [
+            "1:tenantId:old-tenant-id",
+            f"2:accountId:{target_account_id}",
+        ]
+
+    def test_on_account_incremental_filtering_cascade(self):
+        """Test incremental filtering cascade with on_account"""
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            is_manager=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            filtering_state=[],
+        )
+
+        # First filter: tenant
+        tenant_id = UUID("123e4567-e89b-12d3-a456-426614174000")
+        result1 = profile.on_tenant(tenant_id)
+        assert result1.filtering_state == [f"1:tenantId:{tenant_id}"]
+
+        # Second filter: account
+        account_id = UUID("987fcdeb-51a2-43d1-9f12-345678901234")
+        result2 = result1.on_account(account_id)
+        assert result2.filtering_state == [
+            f"1:tenantId:{tenant_id}",
+            f"2:accountId:{account_id}",
+        ]
+
+        # Third filter: roles
+        roles = ["admin", "user"]
+        result3 = result2.with_roles(roles)
+        assert result3.filtering_state == [
+            f"1:tenantId:{tenant_id}",
+            f"2:accountId:{account_id}",
+            "3:role:admin,user",
+        ]
+
+    def test_on_account_with_urls_licensed_resources(self):
+        """Test on_account with URL-based licensed resources"""
+        # Create a URL that will be parsed into a LicensedResource
+        tenant_id = "123e4567-e89b-12d3-a456-426614174000"
+        account_id = "987fcdeb-51a2-43d1-9f12-345678901234"
+        role_id = "456e7890-e89b-12d3-a456-426614174567"
+        role_name = "user"
+        permission_code = "0"
+        sys_value = "0"
+        verified_value = "1"
+        name_encoded = "dGVzdCBhY2NvdW50"  # "test account" in base64
+
+        url = f"tid/{tenant_id}/aid/{account_id}/rid/{role_id}?pr={role_name}:{permission_code}&sys={sys_value}&v={verified_value}&name={name_encoded}"
+
+        licensed_resources = LicensedResources(urls=[url])
+
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            is_manager=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            licensed_resources=licensed_resources,
+        )
+
+        # Filter by the account ID from the URL
+        target_account_id = UUID(account_id)
+        result = profile.on_account(target_account_id)
+
+        # Should return a new profile with filtered licensed resources
+        assert result.licensed_resources is not None
+        assert len(result.licensed_resources.to_licenses_vector()) == 1
+        assert (
+            result.licensed_resources.to_licenses_vector()[0].acc_id
+            == target_account_id
+        )
+        assert result.filtering_state == [f"1:accountId:{target_account_id}"]
