@@ -12,6 +12,12 @@ dependencies = [
     "urllib3 (>=2.5.0,<3.0.0)",
 ]
 
+[tool.poetry]
+packages = [
+    { include = "myc_http_tools", from = "src" },
+    { include = "tests", from = "src" },
+]
+
 [project.optional-dependencies]
 dev = [
     "mypy>=1.18.2",
