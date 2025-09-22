@@ -44,7 +44,6 @@ from myc_http_tools.models.owner import Owner
 profile = Profile(
     acc_id="123e4567-e89b-12d3-a456-426614174000",
     is_subscription=True,
-    is_admin=False,
     is_staff=True,
     is_manager=False,
     owner_is_active=True,

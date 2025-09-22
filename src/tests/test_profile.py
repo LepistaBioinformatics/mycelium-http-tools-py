@@ -22,7 +22,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -33,7 +32,6 @@ class TestProfile:
 
         assert profile.acc_id == UUID("123e4567-e89b-12d3-a456-426614174000")
         assert profile.is_subscription is True
-        assert profile.is_admin is False
         assert profile.is_staff is False
         assert profile.owner_is_active is True
         assert profile.account_is_active is True
@@ -83,7 +81,6 @@ class TestProfile:
             owners=[owner],
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=True,
             is_staff=True,
             owner_is_active=True,
             account_is_active=True,
@@ -101,7 +98,6 @@ class TestProfile:
         assert profile.owners[0] == owner
         assert profile.acc_id == UUID("123e4567-e89b-12d3-a456-426614174000")
         assert profile.is_subscription is True
-        assert profile.is_admin is True
         assert profile.is_staff is True
         assert profile.owner_is_active is True
         assert profile.account_is_active is True
@@ -138,7 +134,6 @@ class TestProfile:
             owners=[owner1, owner2],
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -157,7 +152,6 @@ class TestProfile:
             profile = Profile(
                 acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
                 is_subscription=True,
-                is_admin=False,
                 is_staff=False,
                 owner_is_active=True,
                 account_is_active=True,
@@ -184,7 +178,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -203,7 +196,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -220,7 +212,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -260,7 +251,6 @@ class TestProfile:
             Profile(
                 acc_id="invalid-uuid",
                 is_subscription=True,
-                is_admin=False,
                 is_staff=False,
                 owner_is_active=True,
                 account_is_active=True,
@@ -275,7 +265,6 @@ class TestProfile:
             Profile(
                 acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
                 is_subscription="not-a-boolean",
-                is_admin=False,
                 is_staff=False,
                 owner_is_active=True,
                 account_is_active=True,
@@ -289,7 +278,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -310,7 +298,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -355,7 +342,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -413,7 +399,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -481,7 +466,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -557,7 +541,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -604,7 +587,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -629,7 +611,6 @@ class TestProfile:
         profile1 = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -641,7 +622,6 @@ class TestProfile:
         profile2 = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -653,7 +633,6 @@ class TestProfile:
         profile3 = Profile(
             acc_id=UUID("223e4567-e89b-12d3-a456-426614174001"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -670,7 +649,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -683,14 +661,12 @@ class TestProfile:
         # Pydantic doesn't include class name in string representation by default
         assert "123e4567-e89b-12d3-a456-426614174000" in profile_str
         assert "is_subscription=True" in profile_str
-        assert "is_admin=False" in profile_str
 
     def test_profile_model_copy(self):
         """Test Profile model_copy method"""
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -709,7 +685,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -718,10 +693,9 @@ class TestProfile:
             account_was_deleted=False,
         )
 
-        profile_copy = profile.model_copy(update={"is_admin": True})
-
-        assert profile_copy.is_admin is True
-        assert profile.is_admin is False  # Original unchanged
+        profile_copy = profile.model_copy(update={"is_staff": True})
+        assert profile_copy.is_staff is True
+        assert profile.is_staff is False  # Original unchanged
         assert profile_copy.acc_id == profile.acc_id  # Other fields unchanged
 
     def test_profile_with_complex_meta_data(self):
@@ -754,7 +728,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -774,7 +747,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -792,7 +764,6 @@ class TestProfile:
         """Test Profile with various boolean field combinations"""
         boolean_fields = [
             "is_subscription",
-            "is_admin",
             "is_staff",
             "owner_is_active",
             "account_is_active",
@@ -805,7 +776,6 @@ class TestProfile:
         profile_all_true = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=True,
             is_staff=True,
             owner_is_active=True,
             account_is_active=True,
@@ -821,7 +791,6 @@ class TestProfile:
         profile_all_false = Profile(
             acc_id=UUID("223e4567-e89b-12d3-a456-426614174001"),
             is_subscription=False,
-            is_admin=False,
             is_staff=False,
             owner_is_active=False,
             account_is_active=False,
@@ -838,7 +807,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -876,7 +844,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -929,7 +896,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -953,7 +919,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -974,7 +939,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -1000,7 +964,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -1038,7 +1001,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -1076,7 +1038,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -1141,7 +1102,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -1167,7 +1127,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -1188,7 +1147,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -1227,7 +1185,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -1265,7 +1222,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -1288,7 +1244,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             owner_is_active=True,
             account_is_active=True,
@@ -1325,7 +1280,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=True,
             is_manager=False,
             owner_is_active=True,
@@ -1345,7 +1299,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             is_manager=True,
             owner_is_active=True,
@@ -1365,7 +1318,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=True,  # Staff should take precedence
             is_manager=True,
             owner_is_active=True,
@@ -1416,7 +1368,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             is_manager=False,
             owner_is_active=True,
@@ -1443,7 +1394,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             is_manager=False,
             owner_is_active=True,
@@ -1468,7 +1418,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             is_manager=False,
             owner_is_active=True,
@@ -1496,7 +1445,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             is_manager=False,
             owner_is_active=True,
@@ -1535,7 +1483,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             is_manager=False,
             owner_is_active=True,
@@ -1575,7 +1522,6 @@ class TestProfile:
         profile_staff = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=True,
             is_manager=True,  # Manager is True but staff should win
             owner_is_active=True,
@@ -1593,7 +1539,6 @@ class TestProfile:
         profile_manager = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             is_manager=True,  # Manager is True
             owner_is_active=True,
@@ -1611,7 +1556,6 @@ class TestProfile:
         profile_licensed = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             is_manager=False,  # No staff/manager privileges
             owner_is_active=True,
@@ -1632,7 +1576,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             is_manager=False,
             owner_is_active=True,
@@ -1688,7 +1631,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             is_manager=False,
             owner_is_active=True,
@@ -1746,7 +1688,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             is_manager=False,
             owner_is_active=True,
@@ -1772,7 +1713,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             is_manager=False,
             owner_is_active=True,
@@ -1796,7 +1736,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             is_manager=False,
             owner_is_active=True,
@@ -1820,7 +1759,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             is_manager=False,
             owner_is_active=True,
@@ -1872,7 +1810,6 @@ class TestProfile:
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             is_subscription=True,
-            is_admin=False,
             is_staff=False,
             is_manager=False,
             owner_is_active=True,
