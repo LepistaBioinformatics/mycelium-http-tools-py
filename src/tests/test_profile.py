@@ -832,3 +832,203 @@ class TestProfile:
 
         for field in boolean_fields:
             assert getattr(profile_all_false, field) is False
+
+    def test_on_tenant_without_licensed_resources(self):
+        """Test on_tenant when licensed_resources is None"""
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            licensed_resources=None,
+        )
+
+        tenant_id = UUID("223e4567-e89b-12d3-a456-426614174001")
+        result = profile.on_tenant(tenant_id)
+
+        # Should return a new profile with None licensed_resources
+        assert result.licensed_resources is None
+        assert result.filtering_state == [f"1:tenantId:{tenant_id}"]
+        assert result.acc_id == profile.acc_id
+        assert result.is_subscription == profile.is_subscription
+
+    def test_on_tenant_with_licensed_resources_no_matches(self):
+        """Test on_tenant when no licensed resources match the tenant_id"""
+        # Create licensed resources for a different tenant
+        licensed_resource = LicensedResource(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            sys_acc=False,
+            tenant_id=UUID("323e4567-e89b-12d3-a456-426614174002"),  # Different tenant
+            acc_name="Test Account",
+            role="admin",
+            role_id=UUID("423e4567-e89b-12d3-a456-426614174003"),
+            perm=Permission.READ,
+            verified=True,
+        )
+
+        licensed_resources = LicensedResources(records=[licensed_resource])
+
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            licensed_resources=licensed_resources,
+        )
+
+        tenant_id = UUID("223e4567-e89b-12d3-a456-426614174001")  # Different tenant
+        result = profile.on_tenant(tenant_id)
+
+        # Should return a new profile with None licensed_resources (no matches)
+        assert result.licensed_resources is None
+        assert result.filtering_state == [f"1:tenantId:{tenant_id}"]
+        assert result.acc_id == profile.acc_id
+
+    def test_on_tenant_with_licensed_resources_with_matches(self):
+        """Test on_tenant when licensed resources match the tenant_id"""
+        tenant_id = UUID("223e4567-e89b-12d3-a456-426614174001")
+
+        # Create licensed resources for the target tenant
+        licensed_resource1 = LicensedResource(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            sys_acc=False,
+            tenant_id=tenant_id,  # Matching tenant
+            acc_name="Test Account 1",
+            role="admin",
+            role_id=UUID("423e4567-e89b-12d3-a456-426614174003"),
+            perm=Permission.READ,
+            verified=True,
+        )
+
+        # Create licensed resources for a different tenant
+        licensed_resource2 = LicensedResource(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            sys_acc=False,
+            tenant_id=UUID("323e4567-e89b-12d3-a456-426614174002"),  # Different tenant
+            acc_name="Test Account 2",
+            role="user",
+            role_id=UUID("523e4567-e89b-12d3-a456-426614174004"),
+            perm=Permission.WRITE,
+            verified=True,
+        )
+
+        licensed_resources = LicensedResources(
+            records=[licensed_resource1, licensed_resource2]
+        )
+
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            licensed_resources=licensed_resources,
+        )
+
+        result = profile.on_tenant(tenant_id)
+
+        # Should return a new profile with filtered licensed_resources
+        assert result.licensed_resources is not None
+        assert len(result.licensed_resources.records) == 1
+        assert result.licensed_resources.records[0] == licensed_resource1
+        assert result.filtering_state == [f"1:tenantId:{tenant_id}"]
+        assert result.acc_id == profile.acc_id
+
+    def test_on_tenant_updates_filtering_state(self):
+        """Test that on_tenant properly updates the filtering_state"""
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            filtering_state=["existing_filter"],
+        )
+
+        tenant_id = UUID("223e4567-e89b-12d3-a456-426614174001")
+        result = profile.on_tenant(tenant_id)
+
+        # Should preserve existing filters and add tenant filter
+        assert result.filtering_state == ["existing_filter", f"2:tenantId:{tenant_id}"]
+
+    def test_on_tenant_adds_incremental_tenant_filter(self):
+        """Test that on_tenant adds tenant filter incrementally"""
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            filtering_state=["existing_filter", "2:tenantId:old-tenant-id"],
+        )
+
+        new_tenant_id = UUID("223e4567-e89b-12d3-a456-426614174001")
+        result = profile.on_tenant(new_tenant_id)
+
+        # Should add the new tenant filter incrementally (not replace)
+        assert result.filtering_state == [
+            "existing_filter",
+            "2:tenantId:old-tenant-id",
+            f"3:tenantId:{new_tenant_id}",
+        ]
+
+    def test_on_tenant_incremental_filtering_cascade(self):
+        """Test incremental filtering state as described in documentation"""
+        # Start with empty filtering state
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            filtering_state=[],
+        )
+
+        tenant_id1 = UUID("123e4567-e89b-12d3-a456-426614174000")
+
+        # First filter: tenant
+        result1 = profile.on_tenant(tenant_id1)
+        assert result1.filtering_state == [f"1:tenantId:{tenant_id1}"]
+
+        # Second filter: another tenant (simulating permission filter would be "2:permission:1")
+        tenant_id2 = UUID("123e4567-e89b-12d3-a456-426614174001")
+        result2 = result1.on_tenant(tenant_id2)
+        assert result2.filtering_state == [
+            f"1:tenantId:{tenant_id1}",
+            f"2:tenantId:{tenant_id2}",
+        ]
+
+        # Third filter: another tenant
+        tenant_id3 = UUID("123e4567-e89b-12d3-a456-426614174002")
+        result3 = result2.on_tenant(tenant_id3)
+        assert result3.filtering_state == [
+            f"1:tenantId:{tenant_id1}",
+            f"2:tenantId:{tenant_id2}",
+            f"3:tenantId:{tenant_id3}",
+        ]
