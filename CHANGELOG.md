@@ -1,3 +1,9 @@
+## v0.1.0a4 (2025-09-22)
+
+### Feat
+
+- do implements the profile extraction as optional and required dependency in fastapi context
+
 ## v0.1.0a3 (2025-09-22)
 
 ### Feat
