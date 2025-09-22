@@ -1,12 +1,22 @@
-from typing import Optional, Self
+from typing import Optional, Self, Union
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
+from myc_http_tools.exceptions import (
+    InsufficientLicensesError,
+    InsufficientPrivilegesError,
+)
 from myc_http_tools.models.licensed_resources import LicensedResources
 from myc_http_tools.models.owner import Owner
 from myc_http_tools.models.permission import Permission
+from myc_http_tools.models.related_accounts import (
+    RelatedAccounts,
+    AllowedAccounts,
+    HasStaffPrivileges,
+    HasManagerPrivileges,
+)
 from myc_http_tools.models.tenants_ownership import TenantsOwnership
 from myc_http_tools.models.verbose_status import VerboseStatus
 
@@ -25,6 +35,7 @@ class Profile(BaseModel):
     is_subscription: bool
     is_admin: bool
     is_staff: bool
+    is_manager: bool = Field(default=False)
     owner_is_active: bool
     account_is_active: bool
     account_was_approved: bool
@@ -141,6 +152,47 @@ class Profile(BaseModel):
                 "licensed_resources": licensed_resources,
                 "filtering_state": updated_filtering_state,
             }
+        )
+
+    def get_related_account_or_error(self) -> RelatedAccounts:
+        """Get related accounts based on profile privileges.
+
+        This method determines the appropriate RelatedAccounts variant based on
+        the profile's privileges and available licensed resources.
+
+        Returns:
+            RelatedAccounts: The appropriate variant based on privileges
+
+        Raises:
+            InsufficientLicensesError: When there are no licensed resources
+            InsufficientPrivilegesError: When there are insufficient privileges
+        """
+        # Check for staff privileges first
+        if self.is_staff:
+            return HasStaffPrivileges()
+
+        # Check for manager privileges
+        if self.is_manager:
+            return HasManagerPrivileges()
+
+        # Check for licensed resources
+        if self.licensed_resources is not None:
+            records = self.licensed_resources.to_licenses_vector()
+
+            if not records:
+                raise InsufficientLicensesError()
+
+            # Extract account IDs from licensed resources
+            account_ids = [record.acc_id for record in records]
+            return AllowedAccounts(accounts=account_ids)
+
+        # No privileges available
+        filtering_state_str = (
+            ", ".join(self.filtering_state) if self.filtering_state else ""
+        )
+        raise InsufficientPrivilegesError(
+            f"Insufficient privileges to perform these action (no accounts): {filtering_state_str}",
+            filtering_state=self.filtering_state,
         )
 
     # --------------------------------------------------------------------------

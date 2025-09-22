@@ -1319,3 +1319,310 @@ class TestProfile:
             "2:role:admin,user",
             "3:role:manager",
         ]
+
+    def test_get_related_account_or_error_staff_privileges(self):
+        """Test get_related_account_or_error with staff privileges"""
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=True,
+            is_manager=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+        )
+
+        result = profile.get_related_account_or_error()
+
+        assert result.type == "has_staff_privileges"
+        assert hasattr(result, "type")
+
+    def test_get_related_account_or_error_manager_privileges(self):
+        """Test get_related_account_or_error with manager privileges"""
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            is_manager=True,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+        )
+
+        result = profile.get_related_account_or_error()
+
+        assert result.type == "has_manager_privileges"
+        assert hasattr(result, "type")
+
+    def test_get_related_account_or_error_staff_over_manager(self):
+        """Test that staff privileges take precedence over manager privileges"""
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=True,  # Staff should take precedence
+            is_manager=True,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+        )
+
+        result = profile.get_related_account_or_error()
+
+        assert result.type == "has_staff_privileges"
+        assert hasattr(result, "type")
+
+    def test_get_related_account_or_error_with_licensed_resources(self):
+        """Test get_related_account_or_error with licensed resources"""
+        account_id1 = UUID("11111111-1111-1111-1111-111111111111")
+        account_id2 = UUID("22222222-2222-2222-2222-222222222222")
+        tenant_id = UUID("33333333-3333-3333-3333-333333333333")
+        role_id = UUID("44444444-4444-4444-4444-444444444444")
+
+        licensed_resource1 = LicensedResource(
+            acc_id=account_id1,
+            sys_acc=False,
+            tenant_id=tenant_id,
+            role_id=role_id,
+            acc_name="Account 1",
+            role="user",
+            perm=Permission.READ,
+            verified=True,
+        )
+
+        licensed_resource2 = LicensedResource(
+            acc_id=account_id2,
+            sys_acc=False,
+            tenant_id=tenant_id,
+            role_id=role_id,
+            acc_name="Account 2",
+            role="admin",
+            perm=Permission.WRITE,
+            verified=True,
+        )
+
+        licensed_resources = LicensedResources(
+            records=[licensed_resource1, licensed_resource2]
+        )
+
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            is_manager=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            licensed_resources=licensed_resources,
+        )
+
+        result = profile.get_related_account_or_error()
+
+        assert result.type == "allowed_accounts"
+        assert len(result.accounts) == 2
+        assert account_id1 in result.accounts
+        assert account_id2 in result.accounts
+
+    def test_get_related_account_or_error_empty_licensed_resources(self):
+        """Test get_related_account_or_error with empty licensed resources"""
+        from myc_http_tools.exceptions import InsufficientLicensesError
+
+        licensed_resources = LicensedResources(records=[])
+
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            is_manager=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            licensed_resources=licensed_resources,
+        )
+
+        with pytest.raises(InsufficientLicensesError) as exc_info:
+            profile.get_related_account_or_error()
+
+        assert exc_info.value.code == "MYC00019"
+        assert exc_info.value.exp_true is True
+        assert "Insufficient licenses" in exc_info.value.message
+
+    def test_get_related_account_or_error_none_licensed_resources(self):
+        """Test get_related_account_or_error with None licensed resources"""
+        from myc_http_tools.exceptions import InsufficientPrivilegesError
+
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            is_manager=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            filtering_state=["1:tenantId:123", "2:role:user"],
+        )
+
+        with pytest.raises(InsufficientPrivilegesError) as exc_info:
+            profile.get_related_account_or_error()
+
+        assert exc_info.value.code == "MYC00019"
+        assert exc_info.value.exp_true is True
+        assert "Insufficient privileges" in exc_info.value.message
+        assert "no accounts" in exc_info.value.message
+        assert exc_info.value.filtering_state == ["1:tenantId:123", "2:role:user"]
+        assert "1:tenantId:123, 2:role:user" in exc_info.value.message
+
+    def test_get_related_account_or_error_no_privileges_empty_filtering_state(self):
+        """Test get_related_account_or_error with no privileges and empty filtering state"""
+        from myc_http_tools.exceptions import InsufficientPrivilegesError
+
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            is_manager=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+        )
+
+        with pytest.raises(InsufficientPrivilegesError) as exc_info:
+            profile.get_related_account_or_error()
+
+        assert exc_info.value.code == "MYC00019"
+        assert exc_info.value.exp_true is True
+        assert "Insufficient privileges" in exc_info.value.message
+        assert "no accounts" in exc_info.value.message
+        assert exc_info.value.filtering_state == []
+        assert exc_info.value.message.endswith("(no accounts): ")
+
+    def test_get_related_account_or_error_with_urls_licensed_resources(self):
+        """Test get_related_account_or_error with URL-based licensed resources"""
+        # Create a URL that will be parsed into a LicensedResource
+        tenant_id = "123e4567-e89b-12d3-a456-426614174000"
+        account_id = "987fcdeb-51a2-43d1-9f12-345678901234"
+        role_id = "456e7890-e89b-12d3-a456-426614174567"
+        role_name = "user"
+        permission_code = "0"
+        sys_value = "0"
+        verified_value = "1"
+        name_encoded = "dGVzdCBhY2NvdW50"  # "test account" in base64
+
+        url = f"tid/{tenant_id}/aid/{account_id}/rid/{role_id}?pr={role_name}:{permission_code}&sys={sys_value}&v={verified_value}&name={name_encoded}"
+
+        licensed_resources = LicensedResources(urls=[url])
+
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            is_manager=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            licensed_resources=licensed_resources,
+        )
+
+        result = profile.get_related_account_or_error()
+
+        assert result.type == "allowed_accounts"
+        assert len(result.accounts) == 1
+        assert result.accounts[0] == UUID(account_id)
+
+    def test_get_related_account_or_error_priority_order(self):
+        """Test that the priority order is correct: staff > manager > licensed resources"""
+        account_id = UUID("11111111-1111-1111-1111-111111111111")
+        tenant_id = UUID("33333333-3333-3333-3333-333333333333")
+        role_id = UUID("44444444-4444-4444-4444-444444444444")
+
+        licensed_resource = LicensedResource(
+            acc_id=account_id,
+            sys_acc=False,
+            tenant_id=tenant_id,
+            role_id=role_id,
+            acc_name="Test Account",
+            role="user",
+            perm=Permission.READ,
+            verified=True,
+        )
+
+        licensed_resources = LicensedResources(records=[licensed_resource])
+
+        # Test 1: Staff should take precedence over everything
+        profile_staff = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=True,
+            is_manager=True,  # Manager is True but staff should win
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            licensed_resources=licensed_resources,  # Licensed resources exist but staff should win
+        )
+
+        result = profile_staff.get_related_account_or_error()
+        assert result.type == "has_staff_privileges"
+
+        # Test 2: Manager should take precedence over licensed resources
+        profile_manager = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            is_manager=True,  # Manager is True
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            licensed_resources=licensed_resources,  # Licensed resources exist but manager should win
+        )
+
+        result = profile_manager.get_related_account_or_error()
+        assert result.type == "has_manager_privileges"
+
+        # Test 3: Licensed resources should be used when no staff/manager privileges
+        profile_licensed = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_admin=False,
+            is_staff=False,
+            is_manager=False,  # No staff/manager privileges
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            licensed_resources=licensed_resources,  # Licensed resources should be used
+        )
+
+        result = profile_licensed.get_related_account_or_error()
+        assert result.type == "allowed_accounts"
+        assert len(result.accounts) == 1
+        assert result.accounts[0] == account_id
