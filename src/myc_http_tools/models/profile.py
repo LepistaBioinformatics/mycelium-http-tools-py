@@ -56,13 +56,13 @@ class Profile(BaseModel):
 
         licensed_resources = self.licensed_resources.model_copy()
 
-        # Filter licensed resources based on permission
-        if licensed_resources.records:
-            filtered_records = [
-                resource
-                for resource in licensed_resources.records
-                if resource.perm == permission
-            ]
-            licensed_resources.records = filtered_records
+        licensed_resources.records = list(
+            filter(
+                lambda x: x.perm.to_int() >= permission.to_int(),
+                licensed_resources.to_licenses_vector(),
+            )
+        )
+
+        licensed_resources.urls = None
 
         return self.model_copy(update={"licensed_resources": licensed_resources})
