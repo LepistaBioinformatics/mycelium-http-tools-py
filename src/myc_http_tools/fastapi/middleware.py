@@ -5,8 +5,9 @@ import os
 from typing import Optional
 
 try:
-    from fastapi import HTTPException, Request
+    from fastapi import HTTPException, Request, Header
     from fastapi.responses import JSONResponse
+    from typing import Annotated
 
     FASTAPI_AVAILABLE = True
 except ImportError:
@@ -39,6 +40,22 @@ except ImportError:
                 "FastAPI dependencies not installed. "
                 "Install with: pip install mycelium-http-tools[fastapi]"
             )
+
+    class Header:
+        """Placeholder for Header when FastAPI is not available."""
+
+        def __init__(self, *args, **kwargs):
+            raise ImportError(
+                "FastAPI dependencies not installed. "
+                "Install with: pip install mycelium-http-tools[fastapi]"
+            )
+
+    def Annotated(*args, **kwargs):
+        """Placeholder for Annotated when FastAPI is not available."""
+        raise ImportError(
+            "FastAPI dependencies not installed. "
+            "Install with: pip install mycelium-http-tools[fastapi]"
+        )
 
 
 from myc_http_tools.models.profile import Profile
@@ -139,3 +156,104 @@ async def profile_middleware(request: Request, call_next):
 
     response = await call_next(request)
     return response
+
+
+def get_profile_from_header(
+    profile_header: Annotated[str | None, Header(alias="x-mycelium-profile")] = None,
+) -> Profile | None:
+    """FastAPI dependency to extract profile from x-mycelium-profile header.
+
+    This function can be used as a FastAPI dependency to automatically extract
+    and parse the profile from the HTTP header.
+
+    Args:
+        profile_header: The raw profile JSON string from the header
+
+    Returns:
+        Profile object if successfully parsed, None if header is missing or invalid
+
+    Raises:
+        HTTPException: If required header is missing in production environment
+        or if the JSON parsing fails
+        ImportError: If FastAPI dependencies are not installed
+    """
+    if not FASTAPI_AVAILABLE:
+        raise ImportError(
+            "FastAPI dependencies not installed. "
+            "Install with: pip install mycelium-http-tools[fastapi]"
+        )
+
+    environment = os.getenv("ENVIRONMENT", "development")
+
+    if environment != "development":
+        if profile_header is None:
+            raise HTTPException(
+                status_code=403,
+                detail="Required header 'x-mycelium-profile' missing in production environment.",
+            )
+
+        try:
+            # Parse the JSON from the header
+            profile_json = json.loads(profile_header)
+            # Create Profile instance using Pydantic
+            return Profile.model_validate(profile_json)
+        except json.JSONDecodeError as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid JSON in 'x-mycelium-profile' header: {str(e)}",
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=400, detail=f"Failed to parse profile from header: {str(e)}"
+            )
+
+    # In development mode, try to parse if header exists, otherwise return None
+    if profile_header is not None:
+        try:
+            profile_json = json.loads(profile_header)
+            return Profile.model_validate(profile_json)
+        except (json.JSONDecodeError, Exception):
+            # In development, we're more lenient with errors
+            return None
+
+    return None
+
+
+def get_profile_from_header_required(
+    profile_header: Annotated[str, Header(alias="x-mycelium-profile")],
+) -> Profile:
+    """FastAPI dependency to extract profile from x-mycelium-profile header (required).
+
+    This function requires the header to be present and will raise an error if missing.
+    Use this when the profile is always required for the endpoint.
+
+    Args:
+        profile_header: The raw profile JSON string from the header
+
+    Returns:
+        Profile object if successfully parsed
+
+    Raises:
+        HTTPException: If header is missing or JSON parsing fails
+        ImportError: If FastAPI dependencies are not installed
+    """
+    if not FASTAPI_AVAILABLE:
+        raise ImportError(
+            "FastAPI dependencies not installed. "
+            "Install with: pip install mycelium-http-tools[fastapi]"
+        )
+
+    try:
+        # Parse the JSON from the header
+        profile_json = json.loads(profile_header)
+        # Create Profile instance using Pydantic
+        return Profile.model_validate(profile_json)
+    except json.JSONDecodeError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid JSON in 'x-mycelium-profile' header: {str(e)}",
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, detail=f"Failed to parse profile from header: {str(e)}"
+        )

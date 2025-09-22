@@ -1,9 +1,19 @@
 """FastAPI integration for mycelium-http-tools."""
 
 try:
-    from .middleware import get_profile_from_request, profile_middleware
+    from .middleware import (
+        get_profile_from_request,
+        profile_middleware,
+        get_profile_from_header,
+        get_profile_from_header_required,
+    )
 
-    __all__ = ["get_profile_from_request", "profile_middleware"]
+    __all__ = [
+        "get_profile_from_request",
+        "profile_middleware",
+        "get_profile_from_header",
+        "get_profile_from_header_required",
+    ]
 
 except ImportError as e:
     # FastAPI dependencies not installed

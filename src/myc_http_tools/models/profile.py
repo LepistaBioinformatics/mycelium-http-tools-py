@@ -31,7 +31,7 @@ class Profile(BaseModel):
     # --------------------------------------------------------------------------
 
     owners: list[Owner] = Field(default_factory=list)
-    acc_id: UUID = Field()
+    acc_id: UUID
     is_subscription: bool
     is_staff: bool
     is_manager: bool = Field(default=False)

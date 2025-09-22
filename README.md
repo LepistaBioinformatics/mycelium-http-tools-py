@@ -57,7 +57,43 @@ profile = Profile(
 
 ### FastAPI Integration
 
-If you installed with FastAPI support, you can use the middleware:
+If you installed with FastAPI support, you have several options:
+
+#### Option 1: Using Dependency Injection (Recommended)
+
+```python
+from fastapi import FastAPI, Depends
+from myc_http_tools.fastapi import get_profile_from_header, get_profile_from_header_required
+
+app = FastAPI()
+
+# Optional profile (returns None if header missing in development)
+@app.get("/")
+async def my_route(profile: Profile | None = Depends(get_profile_from_header)):
+    if profile:
+        related_accounts = profile \
+            .with_read_access() \
+            .on_tenant(tenant_id) \
+            .with_roles(["admin"]) \
+            .on_account(account_id) \
+            .get_related_account_or_error()
+        # ... use the related accounts
+    else:
+        return {"message": "No profile available"}
+
+# Required profile (raises error if header missing)
+@app.get("/protected")
+async def protected_route(profile: Profile = Depends(get_profile_from_header_required)):
+    related_accounts = profile \
+        .with_read_access() \
+        .on_tenant(tenant_id) \
+        .with_roles(["admin"]) \
+        .on_account(account_id) \
+        .get_related_account_or_error()
+    # ... use the related accounts
+```
+
+#### Option 2: Using Middleware
 
 ```python
 from fastapi import FastAPI
@@ -73,7 +109,7 @@ async def my_route(request: Request):
     # ... use the profile
 ```
 
-Or use the utility function directly:
+#### Option 3: Manual Extraction
 
 ```python
 from fastapi import FastAPI, Depends
