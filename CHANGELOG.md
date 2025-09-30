@@ -1,3 +1,9 @@
+## v0.1.0a5 (2025-09-30)
+
+### Fix
+
+- include the filtration state on filter by permission
+
 ## v0.1.0a4 (2025-09-22)
 
 ### Feat
