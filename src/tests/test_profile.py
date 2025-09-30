@@ -2,6 +2,7 @@
 Tests for Profile class
 """
 
+import logging
 from uuid import UUID
 
 import pytest
@@ -1642,15 +1643,27 @@ class TestProfile:
         )
 
         # Try to filter by an account that doesn't exist
-        target_account_id = UUID("99999999-9999-9999-9999-999999999999")
-        result = profile.on_account(target_account_id)
+        target_account_id_exists = UUID("11111111-1111-1111-1111-111111111111")
+        target_account_id_not_exists = UUID("88888888-8888-8888-8888-888888888888")
+        result_exists = profile.on_account(target_account_id_exists)
+        result_not_exists = profile.on_account(target_account_id_not_exists)
 
         # Should return a new profile with None licensed_resources (no matches)
-        assert result.licensed_resources is None
-        assert result.filtering_state == [
-            "1:accountId:99999999-9999-9999-9999-999999999999"
+        assert result_exists.licensed_resources is not None
+        assert len(result_exists.licensed_resources.to_licenses_vector()) == 1
+
+        assert result_not_exists.licensed_resources is None
+
+        assert result_exists.filtering_state == [
+            "1:accountId:11111111-1111-1111-1111-111111111111"
         ]
-        assert result.acc_id == profile.acc_id  # Original profile unchanged
+
+        assert result_not_exists.filtering_state == [
+            "1:accountId:88888888-8888-8888-8888-888888888888"
+        ]
+
+        assert result_exists.acc_id == profile.acc_id  # Original profile unchanged
+        assert result_not_exists.acc_id == profile.acc_id  # Original profile unchanged
 
     def test_on_account_with_licensed_resources_with_matches(self):
         """Test on_account with licensed resources with matches"""
@@ -1832,3 +1845,215 @@ class TestProfile:
             == target_account_id
         )
         assert result.filtering_state == [f"1:accountId:{target_account_id}"]
+
+    def test_chained_methods_usage(self):
+        """Test chained method calls as shown in the example format"""
+        # Define global roles for testing
+        __GLOBAL_ROLES = ["admin", "user"]
+
+        # Create a customer ID for testing
+        customer_id = UUID("987fcdeb-51a2-43d1-9f12-345678901234")
+
+        # Create licensed resources for testing
+        read_resource = LicensedResource(
+            tenant_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            acc_id=customer_id,
+            role_id=UUID("456e7890-e89b-12d3-a456-426614174567"),
+            role="admin",
+            perm=Permission.READ,
+            sys_acc=True,
+            acc_name="Test Account",
+            verified=True,
+        )
+
+        write_resource = LicensedResource(
+            tenant_id=UUID("223e4567-e89b-12d3-a456-426614174001"),
+            acc_id=UUID("887fcdeb-51a2-43d1-9f12-345678901235"),
+            role_id=UUID("556e7890-e89b-12d3-a456-426614174568"),
+            role="user",
+            perm=Permission.WRITE,
+            sys_acc=False,
+            acc_name="Write Account",
+            verified=False,
+        )
+
+        licensed_resources = LicensedResources(records=[read_resource, write_resource])
+
+        # Create initial profile
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_staff=False,
+            is_manager=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            licensed_resources=licensed_resources,
+        )
+
+        # Test the chained method calls as shown in the example
+        profile.is_manager = False
+        profile.is_staff = False
+
+        # Step 0: Initial state
+        assert profile.licensed_resources is not None
+        assert len(profile.licensed_resources.records) == 2
+        assert profile.filtering_state is None
+
+        # Step 1: Filter by account
+        profile = profile.on_account(customer_id)
+        assert profile.licensed_resources is not None
+        assert len(profile.licensed_resources.records) == 1
+        assert profile.licensed_resources.records[0].acc_id == customer_id
+        assert profile.filtering_state == [f"1:accountId:{customer_id}"]
+
+        # Step 2: Filter by read access
+        profile = profile.with_read_access()
+        assert profile.licensed_resources is not None
+        assert len(profile.licensed_resources.records) == 1
+        assert profile.licensed_resources.records[0].perm == Permission.READ
+        assert profile.licensed_resources.urls is None  # URLs should be cleared
+
+        # Step 3: Filter by roles
+        profile = profile.with_roles(__GLOBAL_ROLES)
+        assert profile.licensed_resources is not None
+        assert len(profile.licensed_resources.records) == 1
+        assert profile.licensed_resources.records[0].role == "admin"
+        assert profile.filtering_state == [
+            f"1:accountId:{customer_id}",
+            "2:role:admin,user",
+        ]
+
+        # Step 4: Get related accounts
+        related_accounts = profile.get_related_account_or_error()
+        assert related_accounts.type == "allowed_accounts"
+        assert len(related_accounts.accounts) == 1
+        assert related_accounts.accounts[0] == customer_id
+
+    def test_chained_methods_with_no_matches(self):
+        """Test chained method calls when filters result in no matches"""
+        # Define global roles for testing
+        __GLOBAL_ROLES = ["admin", "user"]
+
+        # Create a customer ID that won't match any resources
+        customer_id = UUID("99999999-9999-9999-9999-999999999999")
+
+        # Create licensed resources for a different account
+        read_resource = LicensedResource(
+            tenant_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            acc_id=UUID("11111111-1111-1111-1111-111111111111"),  # Different account
+            role_id=UUID("456e7890-e89b-12d3-a456-426614174567"),
+            role="admin",
+            perm=Permission.READ,
+            sys_acc=True,
+            acc_name="Test Account",
+            verified=True,
+        )
+
+        licensed_resources = LicensedResources(records=[read_resource])
+
+        # Create initial profile
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_staff=False,
+            is_manager=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            licensed_resources=licensed_resources,
+        )
+
+        # Test the chained method calls
+        profile.is_manager = False
+        profile.is_staff = False
+
+        # Step 1: Filter by account (no matches)
+        profile = profile.on_account(customer_id)
+        assert profile.licensed_resources is None  # No matches
+        assert profile.filtering_state == [f"1:accountId:{customer_id}"]
+
+        # Step 2: Filter by read access (still no matches)
+        profile = profile.with_read_access()
+        assert profile.licensed_resources is None  # Still no matches
+
+        # Step 3: Filter by roles (still no matches)
+        profile = profile.with_roles(__GLOBAL_ROLES)
+        assert profile.licensed_resources is None  # Still no matches
+        assert profile.filtering_state == [
+            f"1:accountId:{customer_id}",
+            "2:role:admin,user",
+        ]
+
+        # Step 4: Get related accounts should raise an error
+        from myc_http_tools.exceptions import InsufficientPrivilegesError
+
+        with pytest.raises(InsufficientPrivilegesError) as exc_info:
+            profile.get_related_account_or_error()
+
+        assert exc_info.value.code == "MYC00019"
+        assert "Insufficient privileges" in exc_info.value.message
+        assert "no accounts" in exc_info.value.message
+
+    def test_chained_methods_with_staff_privileges(self):
+        """Test chained method calls with staff privileges (should bypass licensed resources)"""
+        # Define global roles for testing
+        __GLOBAL_ROLES = ["admin", "user"]
+
+        # Create a customer ID
+        customer_id = UUID("987fcdeb-51a2-43d1-9f12-345678901234")
+
+        # Create licensed resources
+        read_resource = LicensedResource(
+            tenant_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            acc_id=customer_id,
+            role_id=UUID("456e7890-e89b-12d3-a456-426614174567"),
+            role="admin",
+            perm=Permission.READ,
+            sys_acc=True,
+            acc_name="Test Account",
+            verified=True,
+        )
+
+        licensed_resources = LicensedResources(records=[read_resource])
+
+        # Create initial profile with staff privileges
+        profile = Profile(
+            acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+            is_subscription=True,
+            is_staff=True,  # Staff privileges
+            is_manager=False,
+            owner_is_active=True,
+            account_is_active=True,
+            account_was_approved=True,
+            account_was_archived=False,
+            account_was_deleted=False,
+            licensed_resources=licensed_resources,
+        )
+
+        # Test the chained method calls
+        profile.is_manager = False
+        # Note: is_staff is already True, but we can test the chain
+
+        # Step 1: Filter by account
+        profile = profile.on_account(customer_id)
+        assert profile.licensed_resources is not None
+        assert len(profile.licensed_resources.records) == 1
+
+        # Step 2: Filter by read access
+        profile = profile.with_read_access()
+        assert profile.licensed_resources is not None
+        assert len(profile.licensed_resources.records) == 1
+
+        # Step 3: Filter by roles
+        profile = profile.with_roles(__GLOBAL_ROLES)
+        assert profile.licensed_resources is not None
+        assert len(profile.licensed_resources.records) == 1
+
+        # Step 4: Get related accounts should return staff privileges (bypasses licensed resources)
+        related_accounts = profile.get_related_account_or_error()
+        assert related_accounts.type == "has_staff_privileges"
