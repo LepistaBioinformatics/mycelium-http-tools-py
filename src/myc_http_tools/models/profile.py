@@ -260,4 +260,13 @@ class Profile(BaseModel):
 
         licensed_resources.urls = None
 
-        return self.model_copy(update={"licensed_resources": licensed_resources})
+        filtering_state = self.filtering_state.copy() if self.filtering_state else []
+        next_filter_number = len(filtering_state) + 1
+        filtering_state.append(f"{next_filter_number}:permission:{permission.value}")
+
+        return self.model_copy(
+            update={
+                "licensed_resources": licensed_resources,
+                "filtering_state": filtering_state,
+            }
+        )
