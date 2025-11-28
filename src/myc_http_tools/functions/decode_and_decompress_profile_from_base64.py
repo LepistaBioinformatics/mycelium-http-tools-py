@@ -8,10 +8,16 @@ import base64
 import json
 from typing import Union
 
-import zstandard as zstd
-
 from myc_http_tools.exceptions import ProfileDecodingError
 from myc_http_tools.models.profile import Profile
+
+try:
+    import zstandard as zstd
+
+    ZSTD_AVAILABLE = True
+except ImportError:
+    ZSTD_AVAILABLE = False
+    zstd = None  # type: ignore[assignment]
 
 
 def decode_and_decompress_profile_from_base64(
@@ -31,7 +37,14 @@ def decode_and_decompress_profile_from_base64(
     Raises:
         ProfileDecodingError: If there is an error during decoding, decompression,
             or deserialization.
+        ImportError: If zstandard is not installed.
     """
+    if not ZSTD_AVAILABLE:
+        raise ImportError(
+            "zstandard is not installed. "
+            "Install with: pip install mycelium-http-tools[fastapi]"
+        )
+
     # Decode from Base64
     try:
         if isinstance(profile, str):

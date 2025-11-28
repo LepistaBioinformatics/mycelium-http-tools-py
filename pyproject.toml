@@ -7,11 +7,7 @@ license = { text = "Apache 2.0" }
 readme = "README.md"
 requires-python = ">=3.12,<4.0"
 
-dependencies = [
-    "pydantic (>=2.11.9,<3.0.0)",
-    "urllib3 (>=2.5.0,<3.0.0)",
-    "zstandard (>=0.25.0,<0.26.0)",
-]
+dependencies = ["pydantic (>=2.11.9,<3.0.0)", "urllib3 (>=2.5.0,<3.0.0)"]
 
 [tool.poetry]
 packages = [
@@ -21,7 +17,10 @@ packages = [
 
 [project.optional-dependencies]
 dev = ["mypy>=1.18.2", "pre-commit>=4.3.0", "commitizen>=4.9.1"]
-fastapi = ["fastapi[standard] (>=0.117.1,<0.118.0)"]
+fastapi = [
+    "fastapi[standard] (>=0.117.1,<0.118.0)",
+    "zstandard (>=0.25.0,<0.26.0)",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
