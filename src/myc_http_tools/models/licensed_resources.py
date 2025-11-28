@@ -42,7 +42,7 @@ class LicensedResource(BaseModel):
     def from_str(cls, value: str) -> Self:
         """Parse a licensed resource from a URL string.
 
-        Expected URL format: https://localhost.local/tid/{tenant_id}/aid/{account_id}/rid/{role_id}?pr={role_name}:{permission_code}&sys={0|1}&v={0|1}&name={base64_encoded_name}
+        Expected URL format: t/{tenant_id}/a/{acc_id}/r/{role_id}?p={role}:{perm}&s={0|1}&v={0|1}&n={base64_encoded_name}
         """
         # Construct full URL with localhost.local domain
         full_url = f"https://localhost.local/{value}"
@@ -58,9 +58,9 @@ class LicensedResource(BaseModel):
 
         if (
             len(path_segments) != 6
-            or path_segments[0] != "tid"
-            or path_segments[2] != "aid"
-            or path_segments[4] != "rid"
+            or path_segments[0] != "t"
+            or path_segments[2] != "a"
+            or path_segments[4] != "r"
         ):
             raise ValueError("Invalid path format")
 
@@ -81,11 +81,11 @@ class LicensedResource(BaseModel):
         # Parse query parameters
         query_params = parse_qs(parsed_url.query)
 
-        # Extract permissioned role (pr parameter)
-        if "pr" not in query_params:
-            raise ValueError("Parameter pr not found")
+        # Extract permissioned role (p parameter)
+        if "p" not in query_params:
+            raise ValueError("Parameter permissions not found")
 
-        permissioned_role = query_params["pr"][0]
+        permissioned_role = query_params["p"][0]
         permissioned_role_parts = permissioned_role.split(":")
 
         if len(permissioned_role_parts) != 2:
@@ -94,12 +94,12 @@ class LicensedResource(BaseModel):
         role_name = permissioned_role_parts[0]
         permission_code = permissioned_role_parts[1]
 
-        # Extract system account flag (sys parameter)
-        if "sys" not in query_params:
+        # Extract system account flag (s parameter)
+        if "s" not in query_params:
             raise ValueError("Parameter sys not found")
 
         try:
-            sys_value = int(query_params["sys"][0])
+            sys_value = int(query_params["s"][0])
             if sys_value == 0:
                 sys_acc = False
             elif sys_value == 1:
@@ -128,11 +128,11 @@ class LicensedResource(BaseModel):
                 raise
             raise ValueError("Failed to parse account verification")
 
-        # Extract and decode account name (name parameter)
-        if "name" not in query_params:
+        # Extract and decode account name (n parameter)
+        if "n" not in query_params:
             raise ValueError("Parameter name not found")
 
-        name_encoded = query_params["name"][0]
+        name_encoded = query_params["n"][0]
 
         try:
             name_decoded = base64.b64decode(name_encoded).decode("utf-8")

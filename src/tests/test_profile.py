@@ -581,7 +581,7 @@ class TestProfile:
         licensed_resources = LicensedResources(
             records=[read_resource],
             urls=[
-                "https://localhost.local/tid/123e4567-e89b-12d3-a456-426614174000/aid/987fcdeb-51a2-43d1-9f12-345678901234/rid/456e7890-e89b-12d3-a456-426614174567?pr=admin:0&sys=1&v=1&name=UmVhZCBBY2NvdW50"
+                "t/123e4567-e89b-12d3-a456-426614174000/a/987fcdeb-51a2-43d1-9f12-345678901234/r/456e7890-e89b-12d3-a456-426614174567?p=admin:0&s=1&v=1&n=UmVhZCBBY2NvdW50"
             ],
         )
 
@@ -1477,7 +1477,7 @@ class TestProfile:
         verified_value = "1"
         name_encoded = "dGVzdCBhY2NvdW50"  # "test account" in base64
 
-        url = f"tid/{tenant_id}/aid/{account_id}/rid/{role_id}?pr={role_name}:{permission_code}&sys={sys_value}&v={verified_value}&name={name_encoded}"
+        url = f"t/{tenant_id}/a/{account_id}/r/{role_id}?p={role_name}:{permission_code}&s={sys_value}&v={verified_value}&n={name_encoded}"
 
         licensed_resources = LicensedResources(urls=[url])
 
@@ -1816,7 +1816,7 @@ class TestProfile:
         verified_value = "1"
         name_encoded = "dGVzdCBhY2NvdW50"  # "test account" in base64
 
-        url = f"tid/{tenant_id}/aid/{account_id}/rid/{role_id}?pr={role_name}:{permission_code}&sys={sys_value}&v={verified_value}&name={name_encoded}"
+        url = f"t/{tenant_id}/a/{account_id}/r/{role_id}?p={role_name}:{permission_code}&s={sys_value}&v={verified_value}&n={name_encoded}"
 
         licensed_resources = LicensedResources(urls=[url])
 
@@ -1923,7 +1923,8 @@ class TestProfile:
         assert profile.licensed_resources.records[0].role == "admin"
         assert profile.filtering_state == [
             f"1:accountId:{customer_id}",
-            "2:role:admin,user",
+            "2:permission:read",
+            "3:role:admin,user",
         ]
 
         # Step 4: Get related accounts

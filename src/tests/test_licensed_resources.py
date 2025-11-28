@@ -59,7 +59,7 @@ class TestLicensedResources:
         account_name1 = "Admin User"
 
         name_encoded1 = base64.b64encode(account_name1.encode("utf-8")).decode("ascii")
-        url1 = f"tid/{tenant_id1}/aid/{account_id1}/rid/{role_id1}?pr={role_name1}:{permission_code1}&sys={sys_value1}&v={verified_value1}&name={name_encoded1}"
+        url1 = f"t/{tenant_id1}/a/{account_id1}/r/{role_id1}?p={role_name1}:{permission_code1}&s={sys_value1}&v={verified_value1}&n={name_encoded1}"
 
         tenant_id2 = "223e4567-e89b-12d3-a456-426614174001"
         account_id2 = "887fcdeb-51a2-43d1-9f12-345678901235"
@@ -71,7 +71,7 @@ class TestLicensedResources:
         account_name2 = "Editor User"
 
         name_encoded2 = base64.b64encode(account_name2.encode("utf-8")).decode("ascii")
-        url2 = f"tid/{tenant_id2}/aid/{account_id2}/rid/{role_id2}?pr={role_name2}:{permission_code2}&sys={sys_value2}&v={verified_value2}&name={name_encoded2}"
+        url2 = f"t/{tenant_id2}/a/{account_id2}/r/{role_id2}?p={role_name2}:{permission_code2}&s={sys_value2}&v={verified_value2}&n={name_encoded2}"
 
         licensed_resources = LicensedResources(urls=[url1, url2])
 
@@ -121,7 +121,7 @@ class TestLicensedResources:
         account_name = "Editor User"
 
         name_encoded = base64.b64encode(account_name.encode("utf-8")).decode("ascii")
-        url = f"tid/{tenant_id}/aid/{account_id}/rid/{role_id}?pr={role_name}:{permission_code}&sys={sys_value}&v={verified_value}&name={name_encoded}"
+        url = f"t/{tenant_id}/a/{account_id}/r/{role_id}?p={role_name}:{permission_code}&s={sys_value}&v={verified_value}&n={name_encoded}"
 
         licensed_resources = LicensedResources(records=[resource], urls=[url])
 
@@ -159,7 +159,7 @@ class TestLicensedResources:
         account_name = "Admin User"
 
         name_encoded = base64.b64encode(account_name.encode("utf-8")).decode("ascii")
-        url = f"tid/{tenant_id}/aid/{account_id}/rid/{role_id}?pr={role_name}:{permission_code}&sys={sys_value}&v={verified_value}&name={name_encoded}"
+        url = f"t/{tenant_id}/a/{account_id}/r/{role_id}?p={role_name}:{permission_code}&s={sys_value}&v={verified_value}&n={name_encoded}"
 
         licensed_resources = LicensedResources(records=None, urls=[url])
 
@@ -208,7 +208,7 @@ class TestLicensedResources:
         account_name = "Admin User"
 
         name_encoded = base64.b64encode(account_name.encode("utf-8")).decode("ascii")
-        valid_url = f"tid/{tenant_id}/aid/{account_id}/rid/{role_id}?pr={role_name}:{permission_code}&sys={sys_value}&v={verified_value}&name={name_encoded}"
+        valid_url = f"t/{tenant_id}/a/{account_id}/r/{role_id}?p={role_name}:{permission_code}&s={sys_value}&v={verified_value}&n={name_encoded}"
 
         licensed_resources = LicensedResources(urls=[valid_url, "invalid-url"])
 
@@ -245,7 +245,7 @@ class TestLicensedResources:
         account_name = "Admin User"
 
         name_encoded = base64.b64encode(account_name.encode("utf-8")).decode("ascii")
-        url = f"tid/{tenant_id}/aid/{account_id}/rid/{role_id}?pr={role_name}:{permission_code}&sys={sys_value}&v={verified_value}&name={name_encoded}"
+        url = f"t/{tenant_id}/a/{account_id}/r/{role_id}?p={role_name}:{permission_code}&s={sys_value}&v={verified_value}&n={name_encoded}"
 
         licensed_resources = LicensedResources(urls=[url])
 
@@ -275,7 +275,7 @@ class TestLicensedResources:
         account_name = "Editor User"
 
         name_encoded = base64.b64encode(account_name.encode("utf-8")).decode("ascii")
-        url = f"tid/{tenant_id}/aid/{account_id}/rid/{role_id}?pr={role_name}:{permission_code}&sys={sys_value}&v={verified_value}&name={name_encoded}"
+        url = f"t/{tenant_id}/a/{account_id}/r/{role_id}?p={role_name}:{permission_code}&s={sys_value}&v={verified_value}&n={name_encoded}"
 
         licensed_resources = LicensedResources(records=[resource], urls=[url])
 

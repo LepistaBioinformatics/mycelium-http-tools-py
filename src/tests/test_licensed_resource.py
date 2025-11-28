@@ -27,7 +27,7 @@ class TestLicensedResourceFromStr:
         name_encoded = base64.b64encode(account_name.encode("utf-8")).decode("ascii")
 
         # Construct URL path
-        url_path = f"tid/{tenant_id}/aid/{account_id}/rid/{role_id}?pr={role_name}:{permission_code}&sys={sys_value}&v={verified_value}&name={name_encoded}"
+        url_path = f"t/{tenant_id}/a/{account_id}/r/{role_id}?p={role_name}:{permission_code}&s={sys_value}&v={verified_value}&n={name_encoded}"
 
         resource = LicensedResource.from_str(url_path)
 
@@ -55,7 +55,7 @@ class TestLicensedResourceFromStr:
         name_encoded = base64.b64encode(account_name.encode("utf-8")).decode("ascii")
 
         # Construct URL path
-        url_path = f"tid/{tenant_id}/aid/{account_id}/rid/{role_id}?pr={role_name}:{permission_code}&sys={sys_value}&v={verified_value}&name={name_encoded}"
+        url_path = f"t/{tenant_id}/a/{account_id}/r/{role_id}?p={role_name}:{permission_code}&s={sys_value}&v={verified_value}&n={name_encoded}"
 
         resource = LicensedResource.from_str(url_path)
 
@@ -83,141 +83,141 @@ class TestLicensedResourceFromStr:
         name_encoded = base64.b64encode(account_name.encode("utf-8")).decode("ascii")
 
         # Construct URL path
-        url_path = f"tid/{tenant_id}/aid/{account_id}/rid/{role_id}?pr={role_name}:{permission_code}&sys={sys_value}&v={verified_value}&name={name_encoded}"
+        url_path = f"t/{tenant_id}/a/{account_id}/r/{role_id}?p={role_name}:{permission_code}&s={sys_value}&v={verified_value}&n={name_encoded}"
 
         resource = LicensedResource.from_str(url_path)
 
         assert resource.acc_name == account_name
 
-    def test_invalid_path_format_missing_tid(self):
-        """Test error when path doesn't start with tid"""
-        url_path = "aid/123e4567-e89b-12d3-a456-426614174000/rid/456e7890-e89b-12d3-a456-426614174567?pr=admin:0&sys=1&v=1&name=dGVzdA=="
+    def test_invalid_path_format_missing_t(self):
+        """Test error when path doesn't start with t"""
+        url_path = "a/123e4567-e89b-12d3-a456-426614174000/r/456e7890-e89b-12d3-a456-426614174567?p=admin:0&s=1&v=1&n=dGVzdA=="
 
         with pytest.raises(ValueError, match="Invalid path format"):
             LicensedResource.from_str(url_path)
 
-    def test_invalid_path_format_missing_aid(self):
-        """Test error when path doesn't have aid"""
-        url_path = "tid/123e4567-e89b-12d3-a456-426614174000/rid/456e7890-e89b-12d3-a456-426614174567?pr=admin:0&sys=1&v=1&name=dGVzdA=="
+    def test_invalid_path_format_missing_a(self):
+        """Test error when path doesn't have a"""
+        url_path = "t/123e4567-e89b-12d3-a456-426614174000/r/456e7890-e89b-12d3-a456-426614174567?p=admin:0&s=1&v=1&n=dGVzdA=="
 
         with pytest.raises(ValueError, match="Invalid path format"):
             LicensedResource.from_str(url_path)
 
-    def test_invalid_path_format_missing_rid(self):
-        """Test error when path doesn't have rid"""
-        url_path = "tid/123e4567-e89b-12d3-a456-426614174000/aid/987fcdeb-51a2-43d1-9f12-345678901234?pr=admin:0&sys=1&v=1&name=dGVzdA=="
+    def test_invalid_path_format_missing_r(self):
+        """Test error when path doesn't have r"""
+        url_path = "t/123e4567-e89b-12d3-a456-426614174000/a/987fcdeb-51a2-43d1-9f12-345678901234?p=admin:0&s=1&v=1&n=dGVzdA=="
 
         with pytest.raises(ValueError, match="Invalid path format"):
             LicensedResource.from_str(url_path)
 
     def test_invalid_path_format_wrong_segment_count(self):
         """Test error when path has wrong number of segments"""
-        url_path = "tid/123e4567-e89b-12d3-a456-426614174000/aid/987fcdeb-51a2-43d1-9f12-345678901234/rid/456e7890-e89b-12d3-a456-426614174567/extra?pr=admin:0&sys=1&v=1&name=dGVzdA=="
+        url_path = "t/123e4567-e89b-12d3-a456-426614174000/a/987fcdeb-51a2-43d1-9f12-345678901234/r/456e7890-e89b-12d3-a456-426614174567/extra?p=admin:0&s=1&v=1&n=dGVzdA=="
 
         with pytest.raises(ValueError, match="Invalid path format"):
             LicensedResource.from_str(url_path)
 
     def test_invalid_tenant_uuid(self):
         """Test error when tenant_id is not a valid UUID"""
-        url_path = "tid/invalid-uuid/aid/987fcdeb-51a2-43d1-9f12-345678901234/rid/456e7890-e89b-12d3-a456-426614174567?pr=admin:0&sys=1&v=1&name=dGVzdA=="
+        url_path = "t/invalid-uuid/a/987fcdeb-51a2-43d1-9f12-345678901234/r/456e7890-e89b-12d3-a456-426614174567?p=admin:0&s=1&v=1&n=dGVzdA=="
 
         with pytest.raises(ValueError, match="Invalid tenant UUID"):
             LicensedResource.from_str(url_path)
 
     def test_invalid_account_uuid(self):
         """Test error when account_id is not a valid UUID"""
-        url_path = "tid/123e4567-e89b-12d3-a456-426614174000/aid/invalid-uuid/rid/456e7890-e89b-12d3-a456-426614174567?pr=admin:0&sys=1&v=1&name=dGVzdA=="
+        url_path = "t/123e4567-e89b-12d3-a456-426614174000/a/invalid-uuid/r/456e7890-e89b-12d3-a456-426614174567?p=admin:0&s=1&v=1&n=dGVzdA=="
 
         with pytest.raises(ValueError, match="Invalid account UUID"):
             LicensedResource.from_str(url_path)
 
     def test_invalid_role_uuid(self):
         """Test error when role_id is not a valid UUID"""
-        url_path = "tid/123e4567-e89b-12d3-a456-426614174000/aid/987fcdeb-51a2-43d1-9f12-345678901234/rid/invalid-uuid?pr=admin:0&sys=1&v=1&name=dGVzdA=="
+        url_path = "t/123e4567-e89b-12d3-a456-426614174000/a/987fcdeb-51a2-43d1-9f12-345678901234/r/invalid-uuid?p=admin:0&s=1&v=1&n=dGVzdA=="
 
         with pytest.raises(ValueError, match="Invalid role UUID"):
             LicensedResource.from_str(url_path)
 
-    def test_missing_pr_parameter(self):
-        """Test error when pr parameter is missing"""
-        url_path = "tid/123e4567-e89b-12d3-a456-426614174000/aid/987fcdeb-51a2-43d1-9f12-345678901234/rid/456e7890-e89b-12d3-a456-426614174567?sys=1&v=1&name=dGVzdA=="
+    def test_missing_p_parameter(self):
+        """Test error when p parameter is missing"""
+        url_path = "t/123e4567-e89b-12d3-a456-426614174000/a/987fcdeb-51a2-43d1-9f12-345678901234/r/456e7890-e89b-12d3-a456-426614174567?s=1&v=1&n=dGVzdA=="
 
-        with pytest.raises(ValueError, match="Parameter pr not found"):
+        with pytest.raises(ValueError, match="Parameter permissions not found"):
             LicensedResource.from_str(url_path)
 
-    def test_invalid_pr_format(self):
-        """Test error when pr parameter has invalid format"""
-        url_path = "tid/123e4567-e89b-12d3-a456-426614174000/aid/987fcdeb-51a2-43d1-9f12-345678901234/rid/456e7890-e89b-12d3-a456-426614174567?pr=admin&sys=1&v=1&name=dGVzdA=="
+    def test_invalid_p_format(self):
+        """Test error when p parameter has invalid format"""
+        url_path = "t/123e4567-e89b-12d3-a456-426614174000/a/987fcdeb-51a2-43d1-9f12-345678901234/r/456e7890-e89b-12d3-a456-426614174567?p=admin&s=1&v=1&n=dGVzdA=="
 
         with pytest.raises(ValueError, match="Invalid permissioned role format"):
             LicensedResource.from_str(url_path)
 
-    def test_missing_sys_parameter(self):
-        """Test error when sys parameter is missing"""
-        url_path = "tid/123e4567-e89b-12d3-a456-426614174000/aid/987fcdeb-51a2-43d1-9f12-345678901234/rid/456e7890-e89b-12d3-a456-426614174567?pr=admin:0&v=1&name=dGVzdA=="
+    def test_missing_s_parameter(self):
+        """Test error when s parameter is missing"""
+        url_path = "t/123e4567-e89b-12d3-a456-426614174000/a/987fcdeb-51a2-43d1-9f12-345678901234/r/456e7890-e89b-12d3-a456-426614174567?p=admin:0&v=1&n=dGVzdA=="
 
         with pytest.raises(ValueError, match="Parameter sys not found"):
             LicensedResource.from_str(url_path)
 
-    def test_invalid_sys_value(self):
-        """Test error when sys parameter has invalid value"""
-        url_path = "tid/123e4567-e89b-12d3-a456-426614174000/aid/987fcdeb-51a2-43d1-9f12-345678901234/rid/456e7890-e89b-12d3-a456-426614174567?pr=admin:0&sys=2&v=1&name=dGVzdA=="
+    def test_invalid_s_value(self):
+        """Test error when s parameter has invalid value"""
+        url_path = "t/123e4567-e89b-12d3-a456-426614174000/a/987fcdeb-51a2-43d1-9f12-345678901234/r/456e7890-e89b-12d3-a456-426614174567?p=admin:0&s=2&v=1&n=dGVzdA=="
 
         with pytest.raises(ValueError, match="Invalid account standard"):
             LicensedResource.from_str(url_path)
 
-    def test_invalid_sys_parse(self):
-        """Test error when sys parameter cannot be parsed as integer"""
-        url_path = "tid/123e4567-e89b-12d3-a456-426614174000/aid/987fcdeb-51a2-43d1-9f12-345678901234/rid/456e7890-e89b-12d3-a456-426614174567?pr=admin:0&sys=invalid&v=1&name=dGVzdA=="
+    def test_invalid_s_parse(self):
+        """Test error when s parameter cannot be parsed as integer"""
+        url_path = "t/123e4567-e89b-12d3-a456-426614174000/a/987fcdeb-51a2-43d1-9f12-345678901234/r/456e7890-e89b-12d3-a456-426614174567?p=admin:0&s=invalid&v=1&n=dGVzdA=="
 
         with pytest.raises(ValueError, match="Failed to parse account standard"):
             LicensedResource.from_str(url_path)
 
     def test_missing_v_parameter(self):
         """Test error when v parameter is missing"""
-        url_path = "tid/123e4567-e89b-12d3-a456-426614174000/aid/987fcdeb-51a2-43d1-9f12-345678901234/rid/456e7890-e89b-12d3-a456-426614174567?pr=admin:0&sys=1&name=dGVzdA=="
+        url_path = "t/123e4567-e89b-12d3-a456-426614174000/a/987fcdeb-51a2-43d1-9f12-345678901234/r/456e7890-e89b-12d3-a456-426614174567?p=admin:0&s=1&n=dGVzdA=="
 
         with pytest.raises(ValueError, match="Parameter v not found"):
             LicensedResource.from_str(url_path)
 
     def test_invalid_v_value(self):
         """Test error when v parameter has invalid value"""
-        url_path = "tid/123e4567-e89b-12d3-a456-426614174000/aid/987fcdeb-51a2-43d1-9f12-345678901234/rid/456e7890-e89b-12d3-a456-426614174567?pr=admin:0&sys=1&v=2&name=dGVzdA=="
+        url_path = "t/123e4567-e89b-12d3-a456-426614174000/a/987fcdeb-51a2-43d1-9f12-345678901234/r/456e7890-e89b-12d3-a456-426614174567?p=admin:0&s=1&v=2&n=dGVzdA=="
 
         with pytest.raises(ValueError, match="Invalid account verification"):
             LicensedResource.from_str(url_path)
 
     def test_invalid_v_parse(self):
         """Test error when v parameter cannot be parsed as integer"""
-        url_path = "tid/123e4567-e89b-12d3-a456-426614174000/aid/987fcdeb-51a2-43d1-9f12-345678901234/rid/456e7890-e89b-12d3-a456-426614174567?pr=admin:0&sys=1&v=invalid&name=dGVzdA=="
+        url_path = "t/123e4567-e89b-12d3-a456-426614174000/a/987fcdeb-51a2-43d1-9f12-345678901234/r/456e7890-e89b-12d3-a456-426614174567?p=admin:0&s=1&v=invalid&n=dGVzdA=="
 
         with pytest.raises(ValueError, match="Failed to parse account verification"):
             LicensedResource.from_str(url_path)
 
-    def test_missing_name_parameter(self):
-        """Test error when name parameter is missing"""
-        url_path = "tid/123e4567-e89b-12d3-a456-426614174000/aid/987fcdeb-51a2-43d1-9f12-345678901234/rid/456e7890-e89b-12d3-a456-426614174567?pr=admin:0&sys=1&v=1"
+    def test_missing_n_parameter(self):
+        """Test error when n parameter is missing"""
+        url_path = "t/123e4567-e89b-12d3-a456-426614174000/a/987fcdeb-51a2-43d1-9f12-345678901234/r/456e7890-e89b-12d3-a456-426614174567?p=admin:0&s=1&v=1"
 
         with pytest.raises(ValueError, match="Parameter name not found"):
             LicensedResource.from_str(url_path)
 
     def test_invalid_base64_name(self):
-        """Test error when name parameter contains invalid base64"""
-        url_path = "tid/123e4567-e89b-12d3-a456-426614174000/aid/987fcdeb-51a2-43d1-9f12-345678901234/rid/456e7890-e89b-12d3-a456-426614174567?pr=admin:0&sys=1&v=1&name=invalid-base64!"
+        """Test error when n parameter contains invalid base64"""
+        url_path = "t/123e4567-e89b-12d3-a456-426614174000/a/987fcdeb-51a2-43d1-9f12-345678901234/r/456e7890-e89b-12d3-a456-426614174567?p=admin:0&s=1&v=1&n=invalid-base64!"
 
         with pytest.raises(ValueError, match="Failed to decode account name"):
             LicensedResource.from_str(url_path)
 
     def test_invalid_permission_code(self):
         """Test error when permission code is invalid"""
-        url_path = "tid/123e4567-e89b-12d3-a456-426614174000/aid/987fcdeb-51a2-43d1-9f12-345678901234/rid/456e7890-e89b-12d3-a456-426614174567?pr=admin:2&sys=1&v=1&name=dGVzdA=="
+        url_path = "t/123e4567-e89b-12d3-a456-426614174000/a/987fcdeb-51a2-43d1-9f12-345678901234/r/456e7890-e89b-12d3-a456-426614174567?p=admin:2&s=1&v=1&n=dGVzdA=="
 
         with pytest.raises(ValueError, match="Invalid permission code: 2"):
             LicensedResource.from_str(url_path)
 
     def test_invalid_permission_parse(self):
         """Test error when permission code cannot be parsed as integer"""
-        url_path = "tid/123e4567-e89b-12d3-a456-426614174000/aid/987fcdeb-51a2-43d1-9f12-345678901234/rid/456e7890-e89b-12d3-a456-426614174567?pr=admin:invalid&sys=1&v=1&name=dGVzdA=="
+        url_path = "t/123e4567-e89b-12d3-a456-426614174000/a/987fcdeb-51a2-43d1-9f12-345678901234/r/456e7890-e89b-12d3-a456-426614174567?p=admin:invalid&s=1&v=1&n=dGVzdA=="
 
         with pytest.raises(ValueError):
             LicensedResource.from_str(url_path)
@@ -247,7 +247,7 @@ class TestLicensedResourceFromStr:
         name_encoded = base64.b64encode(account_name.encode("utf-8")).decode("ascii")
 
         # Construct URL path
-        url_path = f"tid/{tenant_id}/aid/{account_id}/rid/{role_id}?pr={role_name}:{permission_code}&sys={sys_value}&v={verified_value}&name={name_encoded}"
+        url_path = f"t/{tenant_id}/a/{account_id}/r/{role_id}?p={role_name}:{permission_code}&s={sys_value}&v={verified_value}&n={name_encoded}"
 
         resource = LicensedResource.from_str(url_path)
 
@@ -268,7 +268,7 @@ class TestLicensedResourceFromStr:
         name_encoded = base64.b64encode(account_name.encode("utf-8")).decode("ascii")
 
         # Construct URL path
-        url_path = f"tid/{tenant_id}/aid/{account_id}/rid/{role_id}?pr={role_name}:{permission_code}&sys={sys_value}&v={verified_value}&name={name_encoded}"
+        url_path = f"t/{tenant_id}/a/{account_id}/r/{role_id}?p={role_name}:{permission_code}&s={sys_value}&v={verified_value}&n={name_encoded}"
 
         resource = LicensedResource.from_str(url_path)
 

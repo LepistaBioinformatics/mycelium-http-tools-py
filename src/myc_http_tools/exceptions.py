@@ -28,3 +28,10 @@ class InsufficientLicensesError(MyceliumError):
 
     def __init__(self, message: str = "Insufficient licenses to perform these action"):
         super().__init__(message=message, code="MYC00019", exp_true=True)
+
+
+class ProfileDecodingError(MyceliumError):
+    """Raised when there is an error decoding or decompressing a profile."""
+
+    def __init__(self, message: str):
+        super().__init__(message=message, code="MYC00020", exp_true=False)
