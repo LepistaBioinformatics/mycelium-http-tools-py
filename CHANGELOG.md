@@ -1,3 +1,11 @@
+## v0.1.0a6 (2025-11-28)
+
+### Feat
+
+- turn zstandard optional dependency
+- implements the decoding from header of the profile
+- implements the decoding function for profile fetching
+
 ## v0.1.0a5 (2025-09-30)
 
 ### Fix
