@@ -23,6 +23,7 @@ pip install mycelium-http-tools[fastapi]
 This will install the additional dependencies:
 
 - `fastapi>=0.104.0,<1.0.0`
+- `zstandard>=0.25.0,<0.26.0`
 
 ### Development Installation
 
