@@ -1,8 +1,18 @@
-"""FastAPI middleware for extracting profile from HTTP headers."""
+"""FastAPI middleware for extracting profile from HTTP headers.
 
-import json
+This module provides middleware and dependencies for extracting user profiles
+from HTTP headers in FastAPI applications. The profile is expected to be
+Base64-encoded and ZSTD-compressed in the 'x-mycelium-profile' header.
+"""
+
+import logging
 import os
 from typing import Optional
+
+from myc_http_tools.exceptions import ProfileDecodingError
+from myc_http_tools.functions import decode_and_decompress_profile_from_base64
+from myc_http_tools.models.profile import Profile
+from myc_http_tools.settings import DEFAULT_PROFILE_KEY
 
 try:
     from fastapi import HTTPException, Request, Header
@@ -58,15 +68,15 @@ except ImportError:
         )
 
 
-from myc_http_tools.models.profile import Profile
+logger = logging.getLogger(__name__)
 
 
 def get_profile_from_request(request: Request) -> Optional[Profile]:
     """Extract profile from HTTP headers.
 
     This function extracts the profile from the 'x-mycelium-profile' header
-    in the HTTP request. The header should contain a JSON string representation
-    of the Profile object.
+    in the HTTP request. The header should contain a Base64-encoded,
+    ZSTD-compressed profile.
 
     Args:
         request: The FastAPI Request object
@@ -77,7 +87,7 @@ def get_profile_from_request(request: Request) -> Optional[Profile]:
 
     Raises:
         HTTPException: If required header is missing in production environment
-        or if the JSON parsing fails
+        or if the decoding/decompression fails
         ImportError: If FastAPI dependencies are not installed
     """
     if not FASTAPI_AVAILABLE:
@@ -89,34 +99,39 @@ def get_profile_from_request(request: Request) -> Optional[Profile]:
     incoming_headers = dict(request.headers)
 
     if environment != "development":
-        if "x-mycelium-profile" not in incoming_headers:
+        if DEFAULT_PROFILE_KEY not in incoming_headers:
             raise HTTPException(
                 status_code=403,
-                detail="Required header 'x-mycelium-profile' missing in production environment.",
+                detail=f"Required header '{DEFAULT_PROFILE_KEY}' missing in production environment.",
             )
 
         try:
-            # Parse the JSON from the header
-            profile_json = json.loads(incoming_headers["x-mycelium-profile"])
-            # Create Profile instance using Pydantic
-            return Profile.model_validate(profile_json)
-        except json.JSONDecodeError as e:
+            # Decode and decompress the profile from Base64/ZSTD
+            return decode_and_decompress_profile_from_base64(
+                incoming_headers[DEFAULT_PROFILE_KEY]
+            )
+        except ProfileDecodingError as e:
+            logger.warning(f"Unable to decode and decompress profile: {e.message}")
             raise HTTPException(
-                status_code=400,
-                detail=f"Invalid JSON in 'x-mycelium-profile' header: {str(e)}",
+                status_code=401,
+                detail="Unable to check user identity. Please contact administrators",
             )
         except Exception as e:
+            logger.warning(f"Unable to check user identity due: {e}")
             raise HTTPException(
-                status_code=400, detail=f"Failed to parse profile from header: {str(e)}"
+                status_code=401,
+                detail="Unable to check user identity. Please contact administrators",
             )
 
     # In development mode, try to parse if header exists, otherwise return None
-    if "x-mycelium-profile" in incoming_headers:
+    if DEFAULT_PROFILE_KEY in incoming_headers:
         try:
-            profile_json = json.loads(incoming_headers["x-mycelium-profile"])
-            return Profile.model_validate(profile_json)
-        except (json.JSONDecodeError, Exception):
+            return decode_and_decompress_profile_from_base64(
+                incoming_headers[DEFAULT_PROFILE_KEY]
+            )
+        except Exception as e:
             # In development, we're more lenient with errors
+            logger.debug(f"Failed to decode profile in development mode: {e}")
             return None
 
     return None
@@ -164,17 +179,18 @@ def get_profile_from_header(
     """FastAPI dependency to extract profile from x-mycelium-profile header.
 
     This function can be used as a FastAPI dependency to automatically extract
-    and parse the profile from the HTTP header.
+    and parse the profile from the HTTP header. The header should contain a
+    Base64-encoded, ZSTD-compressed profile.
 
     Args:
-        profile_header: The raw profile JSON string from the header
+        profile_header: The Base64-encoded, ZSTD-compressed profile string
 
     Returns:
         Profile object if successfully parsed, None if header is missing or invalid
 
     Raises:
         HTTPException: If required header is missing in production environment
-        or if the JSON parsing fails
+        or if the decoding/decompression fails
         ImportError: If FastAPI dependencies are not installed
     """
     if not FASTAPI_AVAILABLE:
@@ -189,31 +205,32 @@ def get_profile_from_header(
         if profile_header is None:
             raise HTTPException(
                 status_code=403,
-                detail="Required header 'x-mycelium-profile' missing in production environment.",
+                detail=f"Required header '{DEFAULT_PROFILE_KEY}' missing in production environment.",
             )
 
         try:
-            # Parse the JSON from the header
-            profile_json = json.loads(profile_header)
-            # Create Profile instance using Pydantic
-            return Profile.model_validate(profile_json)
-        except json.JSONDecodeError as e:
+            # Decode and decompress the profile from Base64/ZSTD
+            return decode_and_decompress_profile_from_base64(profile_header)
+        except ProfileDecodingError as e:
+            logger.warning(f"Unable to decode and decompress profile: {e.message}")
             raise HTTPException(
-                status_code=400,
-                detail=f"Invalid JSON in 'x-mycelium-profile' header: {str(e)}",
+                status_code=401,
+                detail="Unable to check user identity. Please contact administrators",
             )
         except Exception as e:
+            logger.warning(f"Unable to check user identity due: {e}")
             raise HTTPException(
-                status_code=400, detail=f"Failed to parse profile from header: {str(e)}"
+                status_code=401,
+                detail="Unable to check user identity. Please contact administrators",
             )
 
     # In development mode, try to parse if header exists, otherwise return None
     if profile_header is not None:
         try:
-            profile_json = json.loads(profile_header)
-            return Profile.model_validate(profile_json)
-        except (json.JSONDecodeError, Exception):
+            return decode_and_decompress_profile_from_base64(profile_header)
+        except Exception as e:
             # In development, we're more lenient with errors
+            logger.debug(f"Failed to decode profile in development mode: {e}")
             return None
 
     return None
@@ -225,16 +242,17 @@ def get_profile_from_header_required(
     """FastAPI dependency to extract profile from x-mycelium-profile header (required).
 
     This function requires the header to be present and will raise an error if missing.
-    Use this when the profile is always required for the endpoint.
+    Use this when the profile is always required for the endpoint. The header should
+    contain a Base64-encoded, ZSTD-compressed profile.
 
     Args:
-        profile_header: The raw profile JSON string from the header
+        profile_header: The Base64-encoded, ZSTD-compressed profile string
 
     Returns:
         Profile object if successfully parsed
 
     Raises:
-        HTTPException: If header is missing or JSON parsing fails
+        HTTPException: If header is missing or decoding/decompression fails
         ImportError: If FastAPI dependencies are not installed
     """
     if not FASTAPI_AVAILABLE:
@@ -244,16 +262,17 @@ def get_profile_from_header_required(
         )
 
     try:
-        # Parse the JSON from the header
-        profile_json = json.loads(profile_header)
-        # Create Profile instance using Pydantic
-        return Profile.model_validate(profile_json)
-    except json.JSONDecodeError as e:
+        # Decode and decompress the profile from Base64/ZSTD
+        return decode_and_decompress_profile_from_base64(profile_header)
+    except ProfileDecodingError as e:
+        logger.warning(f"Unable to decode and decompress profile: {e.message}")
         raise HTTPException(
-            status_code=400,
-            detail=f"Invalid JSON in 'x-mycelium-profile' header: {str(e)}",
+            status_code=401,
+            detail="Unable to check user identity. Please contact administrators",
         )
     except Exception as e:
+        logger.warning(f"Unable to check user identity due: {e}")
         raise HTTPException(
-            status_code=400, detail=f"Failed to parse profile from header: {str(e)}"
+            status_code=401,
+            detail="Unable to check user identity. Please contact administrators",
         )
