@@ -18,7 +18,9 @@ class MyceliumError(Exception):
 class InsufficientPrivilegesError(MyceliumError):
     """Raised when there are insufficient privileges to perform an action."""
 
-    def __init__(self, message: str, filtering_state: Optional[list[str]] = None):
+    def __init__(
+        self, message: str, filtering_state: Optional[list[str]] = None
+    ):
         self.filtering_state = filtering_state or []
         super().__init__(message=message, code="MYC00019", exp_true=True)
 
@@ -26,7 +28,9 @@ class InsufficientPrivilegesError(MyceliumError):
 class InsufficientLicensesError(MyceliumError):
     """Raised when there are insufficient licenses to perform an action."""
 
-    def __init__(self, message: str = "Insufficient licenses to perform these action"):
+    def __init__(
+        self, message: str = "Insufficient licenses to perform these action"
+    ):
         super().__init__(message=message, code="MYC00019", exp_true=True)
 
 

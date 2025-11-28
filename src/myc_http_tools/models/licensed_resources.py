@@ -171,3 +171,5 @@ class LicensedResources(BaseModel):
 
         if self.urls is not None:
             return [LicensedResource.from_str(url) for url in self.urls]
+
+        return []

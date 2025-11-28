@@ -82,7 +82,9 @@ class TestDecodeAndDecompressProfileFromBase64:
         original_json = original_profile.model_dump_json(by_alias=True)
         decoded_json = decoded_profile.model_dump_json(by_alias=True)
 
-        assert original_json == decoded_json, "Full profile JSON should match exactly"
+        assert (
+            original_json == decoded_json
+        ), "Full profile JSON should match exactly"
 
     def test_decode_and_decompress_profile_with_bytes_input(self):
         """Test that the function accepts bytes input"""
@@ -96,7 +98,9 @@ class TestDecodeAndDecompressProfileFromBase64:
         encoded_bytes = encoded.encode("utf-8")
 
         # Decode and decompress the profile
-        decoded_profile = decode_and_decompress_profile_from_base64(encoded_bytes)
+        decoded_profile = decode_and_decompress_profile_from_base64(
+            encoded_bytes
+        )
 
         assert (
             original_profile.acc_id == decoded_profile.acc_id
@@ -115,7 +119,9 @@ class TestDecodeAndDecompressProfileFromBase64:
     def test_decode_and_decompress_profile_invalid_zstd(self):
         """Test error when Base64 content is not valid ZSTD compressed data"""
         # Valid Base64 but not ZSTD compressed
-        invalid_zstd = base64.standard_b64encode(b"not zstd data").decode("ascii")
+        invalid_zstd = base64.standard_b64encode(b"not zstd data").decode(
+            "ascii"
+        )
 
         with pytest.raises(ProfileDecodingError) as exc_info:
             decode_and_decompress_profile_from_base64(invalid_zstd)
@@ -141,7 +147,9 @@ class TestDecodeAndDecompressProfileFromBase64:
         # Create valid ZSTD compressed JSON but with wrong schema
         invalid_profile = {"invalid_field": "value"}
         compressor = zstd.ZstdCompressor()
-        compressed = compressor.compress(json.dumps(invalid_profile).encode("utf-8"))
+        compressed = compressor.compress(
+            json.dumps(invalid_profile).encode("utf-8")
+        )
         encoded = base64.standard_b64encode(compressed).decode("ascii")
 
         with pytest.raises(ProfileDecodingError) as exc_info:
@@ -173,8 +181,12 @@ class TestDecodeAndDecompressProfileFromBase64:
         assert decoded_profile.licensed_resources is not None
         assert original_profile.licensed_resources is not None
 
-        original_records = original_profile.licensed_resources.to_licenses_vector()
-        decoded_records = decoded_profile.licensed_resources.to_licenses_vector()
+        original_records = (
+            original_profile.licensed_resources.to_licenses_vector()
+        )
+        decoded_records = (
+            decoded_profile.licensed_resources.to_licenses_vector()
+        )
 
         assert len(original_records) == len(
             decoded_records
@@ -263,4 +275,3 @@ class TestDecodeAndDecompressProfileFromBase64:
             assert (
                 original_record.name == decoded_record.name
             ), f"Tenant ownership {i} name should match"
-

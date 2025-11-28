@@ -9,4 +9,3 @@ __all__ = [
     "ProfileDecodingError",
     "decode_and_decompress_profile_from_base64",
 ]
-

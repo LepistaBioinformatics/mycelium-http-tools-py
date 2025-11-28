@@ -24,7 +24,7 @@ except ImportError:
     # FastAPI not available - define placeholder types
     FASTAPI_AVAILABLE = False
 
-    class Request:
+    class Request:  # type: ignore[no-redef]
         """Placeholder for Request when FastAPI is not available."""
 
         def __init__(self, *args, **kwargs):
@@ -33,7 +33,7 @@ except ImportError:
                 "Install with: pip install mycelium-http-tools[fastapi]"
             )
 
-    class HTTPException(Exception):
+    class HTTPException(Exception):  # type: ignore[no-redef]
         """Placeholder for HTTPException when FastAPI is not available."""
 
         def __init__(self, *args, **kwargs):
@@ -42,7 +42,7 @@ except ImportError:
                 "Install with: pip install mycelium-http-tools[fastapi]"
             )
 
-    class JSONResponse:
+    class JSONResponse:  # type: ignore[no-redef]
         """Placeholder for JSONResponse when FastAPI is not available."""
 
         def __init__(self, *args, **kwargs):
@@ -51,7 +51,7 @@ except ImportError:
                 "Install with: pip install mycelium-http-tools[fastapi]"
             )
 
-    class Header:
+    class Header:  # type: ignore[no-redef]
         """Placeholder for Header when FastAPI is not available."""
 
         def __init__(self, *args, **kwargs):
@@ -60,7 +60,7 @@ except ImportError:
                 "Install with: pip install mycelium-http-tools[fastapi]"
             )
 
-    def Annotated(*args, **kwargs):
+    def Annotated(*args, **kwargs):  # type: ignore[misc]
         """Placeholder for Annotated when FastAPI is not available."""
         raise ImportError(
             "FastAPI dependencies not installed. "
@@ -111,7 +111,9 @@ def get_profile_from_request(request: Request) -> Optional[Profile]:
                 incoming_headers[DEFAULT_PROFILE_KEY]
             )
         except ProfileDecodingError as e:
-            logger.warning(f"Unable to decode and decompress profile: {e.message}")
+            logger.warning(
+                f"Unable to decode and decompress profile: {e.message}"
+            )
             raise HTTPException(
                 status_code=401,
                 detail="Unable to check user identity. Please contact administrators",
@@ -166,7 +168,8 @@ async def profile_middleware(request: Request, call_next):
     except Exception as e:
         # Handle any other unexpected errors
         return JSONResponse(
-            status_code=500, content={"detail": f"Internal server error: {str(e)}"}
+            status_code=500,
+            content={"detail": f"Internal server error: {str(e)}"},
         )
 
     response = await call_next(request)
@@ -174,7 +177,9 @@ async def profile_middleware(request: Request, call_next):
 
 
 def get_profile_from_header(
-    profile_header: Annotated[str | None, Header(alias="x-mycelium-profile")] = None,
+    profile_header: Annotated[
+        str | None, Header(alias="x-mycelium-profile")
+    ] = None,
 ) -> Profile | None:
     """FastAPI dependency to extract profile from x-mycelium-profile header.
 
@@ -212,7 +217,9 @@ def get_profile_from_header(
             # Decode and decompress the profile from Base64/ZSTD
             return decode_and_decompress_profile_from_base64(profile_header)
         except ProfileDecodingError as e:
-            logger.warning(f"Unable to decode and decompress profile: {e.message}")
+            logger.warning(
+                f"Unable to decode and decompress profile: {e.message}"
+            )
             raise HTTPException(
                 status_code=401,
                 detail="Unable to check user identity. Please contact administrators",

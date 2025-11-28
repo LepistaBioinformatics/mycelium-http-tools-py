@@ -1,4 +1,4 @@
-from typing import Optional, Self, Union
+from typing import Optional, Self
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -83,7 +83,9 @@ class Profile(BaseModel):
 
             # Create new LicensedResources if we have filtered results
             if filtered_resources:
-                licensed_resources = LicensedResources(records=filtered_resources)
+                licensed_resources = LicensedResources(
+                    records=filtered_resources
+                )
 
         # Update filtering state to track the tenant filter (incremental)
         updated_filtering_state = (
@@ -130,7 +132,9 @@ class Profile(BaseModel):
 
             # Create new LicensedResources if we have filtered results
             if filtered_resources:
-                licensed_resources = LicensedResources(records=filtered_resources)
+                licensed_resources = LicensedResources(
+                    records=filtered_resources
+                )
 
         # Update filtering state to track the role filter (incremental)
         updated_filtering_state = (
@@ -173,12 +177,16 @@ class Profile(BaseModel):
 
             # Filter by account_id
             filtered_resources = [
-                resource for resource in all_resources if resource.acc_id == account_id
+                resource
+                for resource in all_resources
+                if resource.acc_id == account_id
             ]
 
             # Create new LicensedResources if we have filtered results
             if filtered_resources:
-                licensed_resources = LicensedResources(records=filtered_resources)
+                licensed_resources = LicensedResources(
+                    records=filtered_resources
+                )
 
         # Update filtering state to track the account filter (incremental)
         updated_filtering_state = (
@@ -260,9 +268,13 @@ class Profile(BaseModel):
 
         licensed_resources.urls = None
 
-        filtering_state = self.filtering_state.copy() if self.filtering_state else []
+        filtering_state = (
+            self.filtering_state.copy() if self.filtering_state else []
+        )
         next_filter_number = len(filtering_state) + 1
-        filtering_state.append(f"{next_filter_number}:permission:{permission.value}")
+        filtering_state.append(
+            f"{next_filter_number}:permission:{permission.value}"
+        )
 
         return self.model_copy(
             update={

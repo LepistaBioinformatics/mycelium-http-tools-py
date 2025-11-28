@@ -2,16 +2,21 @@
 Tests for Profile class
 """
 
-import logging
 from uuid import UUID
 
 import pytest
 
-from myc_http_tools.models.licensed_resources import LicensedResource, LicensedResources
+from myc_http_tools.models.licensed_resources import (
+    LicensedResource,
+    LicensedResources,
+)
 from myc_http_tools.models.owner import Owner
 from myc_http_tools.models.permission import Permission
 from myc_http_tools.models.profile import Profile
-from myc_http_tools.models.tenants_ownership import TenantOwnership, TenantsOwnership
+from myc_http_tools.models.tenants_ownership import (
+    TenantOwnership,
+    TenantsOwnership,
+)
 from myc_http_tools.models.verbose_status import VerboseStatus
 
 
@@ -338,7 +343,9 @@ class TestProfile:
             verified=False,
         )
 
-        licensed_resources = LicensedResources(records=[read_resource, write_resource])
+        licensed_resources = LicensedResources(
+            records=[read_resource, write_resource]
+        )
 
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
@@ -395,7 +402,9 @@ class TestProfile:
             verified=False,
         )
 
-        licensed_resources = LicensedResources(records=[read_resource, write_resource])
+        licensed_resources = LicensedResources(
+            records=[read_resource, write_resource]
+        )
 
         profile = Profile(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
@@ -536,7 +545,12 @@ class TestProfile:
         )
 
         licensed_resources = LicensedResources(
-            records=[read_resource1, read_resource2, write_resource1, write_resource2]
+            records=[
+                read_resource1,
+                read_resource2,
+                write_resource1,
+                write_resource2,
+            ]
         )
 
         profile = Profile(
@@ -832,7 +846,9 @@ class TestProfile:
         licensed_resource = LicensedResource(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             sys_acc=False,
-            tenant_id=UUID("323e4567-e89b-12d3-a456-426614174002"),  # Different tenant
+            tenant_id=UUID(
+                "323e4567-e89b-12d3-a456-426614174002"
+            ),  # Different tenant
             acc_name="Test Account",
             role="admin",
             role_id=UUID("423e4567-e89b-12d3-a456-426614174003"),
@@ -854,7 +870,9 @@ class TestProfile:
             licensed_resources=licensed_resources,
         )
 
-        tenant_id = UUID("223e4567-e89b-12d3-a456-426614174001")  # Different tenant
+        tenant_id = UUID(
+            "223e4567-e89b-12d3-a456-426614174001"
+        )  # Different tenant
         result = profile.on_tenant(tenant_id)
 
         # Should return a new profile with None licensed_resources (no matches)
@@ -882,7 +900,9 @@ class TestProfile:
         licensed_resource2 = LicensedResource(
             acc_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
             sys_acc=False,
-            tenant_id=UUID("323e4567-e89b-12d3-a456-426614174002"),  # Different tenant
+            tenant_id=UUID(
+                "323e4567-e89b-12d3-a456-426614174002"
+            ),  # Different tenant
             acc_name="Test Account 2",
             role="user",
             role_id=UUID("523e4567-e89b-12d3-a456-426614174004"),
@@ -933,7 +953,10 @@ class TestProfile:
         result = profile.on_tenant(tenant_id)
 
         # Should preserve existing filters and add tenant filter
-        assert result.filtering_state == ["existing_filter", f"2:tenantId:{tenant_id}"]
+        assert result.filtering_state == [
+            "existing_filter",
+            f"2:tenantId:{tenant_id}",
+        ]
 
     def test_on_tenant_adds_incremental_tenant_filter(self):
         """Test that on_tenant adds tenant filter incrementally"""
@@ -1141,7 +1164,10 @@ class TestProfile:
         result = profile.with_roles(roles)
 
         # Should preserve existing filters and add role filter
-        assert result.filtering_state == ["existing_filter", "2:role:admin,user"]
+        assert result.filtering_state == [
+            "existing_filter",
+            "2:role:admin,user",
+        ]
 
     def test_with_roles_adds_incremental_role_filter(self):
         """Test that with_roles adds role filter incrementally"""
@@ -1436,10 +1462,15 @@ class TestProfile:
         assert exc_info.value.exp_true is True
         assert "Insufficient privileges" in exc_info.value.message
         assert "no accounts" in exc_info.value.message
-        assert exc_info.value.filtering_state == ["1:tenantId:123", "2:role:user"]
+        assert exc_info.value.filtering_state == [
+            "1:tenantId:123",
+            "2:role:user",
+        ]
         assert "1:tenantId:123, 2:role:user" in exc_info.value.message
 
-    def test_get_related_account_or_error_no_privileges_empty_filtering_state(self):
+    def test_get_related_account_or_error_no_privileges_empty_filtering_state(
+        self,
+    ):
         """Test get_related_account_or_error with no privileges and empty filtering state"""
         from myc_http_tools.exceptions import InsufficientPrivilegesError
 
@@ -1644,7 +1675,9 @@ class TestProfile:
 
         # Try to filter by an account that doesn't exist
         target_account_id_exists = UUID("11111111-1111-1111-1111-111111111111")
-        target_account_id_not_exists = UUID("88888888-8888-8888-8888-888888888888")
+        target_account_id_not_exists = UUID(
+            "88888888-8888-8888-8888-888888888888"
+        )
         result_exists = profile.on_account(target_account_id_exists)
         result_not_exists = profile.on_account(target_account_id_not_exists)
 
@@ -1662,8 +1695,12 @@ class TestProfile:
             "1:accountId:88888888-8888-8888-8888-888888888888"
         ]
 
-        assert result_exists.acc_id == profile.acc_id  # Original profile unchanged
-        assert result_not_exists.acc_id == profile.acc_id  # Original profile unchanged
+        assert (
+            result_exists.acc_id == profile.acc_id
+        )  # Original profile unchanged
+        assert (
+            result_not_exists.acc_id == profile.acc_id
+        )  # Original profile unchanged
 
     def test_on_account_with_licensed_resources_with_matches(self):
         """Test on_account with licensed resources with matches"""
@@ -1717,7 +1754,10 @@ class TestProfile:
         # Should return a new profile with filtered licensed resources
         assert result.licensed_resources is not None
         assert len(result.licensed_resources.to_licenses_vector()) == 1
-        assert result.licensed_resources.to_licenses_vector()[0].acc_id == account_id1
+        assert (
+            result.licensed_resources.to_licenses_vector()[0].acc_id
+            == account_id1
+        )
         assert result.filtering_state == [f"1:accountId:{account_id1}"]
         assert result.acc_id == profile.acc_id  # Original profile unchanged
 
@@ -1877,7 +1917,9 @@ class TestProfile:
             verified=False,
         )
 
-        licensed_resources = LicensedResources(records=[read_resource, write_resource])
+        licensed_resources = LicensedResources(
+            records=[read_resource, write_resource]
+        )
 
         # Create initial profile
         profile = Profile(
@@ -1944,7 +1986,9 @@ class TestProfile:
         # Create licensed resources for a different account
         read_resource = LicensedResource(
             tenant_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
-            acc_id=UUID("11111111-1111-1111-1111-111111111111"),  # Different account
+            acc_id=UUID(
+                "11111111-1111-1111-1111-111111111111"
+            ),  # Different account
             role_id=UUID("456e7890-e89b-12d3-a456-426614174567"),
             role="admin",
             perm=Permission.READ,

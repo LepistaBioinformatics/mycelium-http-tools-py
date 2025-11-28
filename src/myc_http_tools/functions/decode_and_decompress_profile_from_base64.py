@@ -41,7 +41,9 @@ def decode_and_decompress_profile_from_base64(
 
         decoded_profile = base64.standard_b64decode(profile_bytes)
     except Exception as e:
-        raise ProfileDecodingError(f"Failed to decode base64 profile: {e}") from e
+        raise ProfileDecodingError(
+            f"Failed to decode base64 profile: {e}"
+        ) from e
 
     # Decompress profile from ZSTD
     try:
@@ -63,4 +65,3 @@ def decode_and_decompress_profile_from_base64(
         return Profile.model_validate(profile_dict)
     except Exception as e:
         raise ProfileDecodingError(f"Failed to deserialize profile: {e}") from e
-

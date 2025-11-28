@@ -7,7 +7,9 @@ from pydantic import BaseModel, Field
 class AllowedAccounts(BaseModel):
     """Represents accounts that are allowed access."""
 
-    type: Literal["allowed_accounts"] = Field(default="allowed_accounts", alias="type")
+    type: Literal["allowed_accounts"] = Field(
+        default="allowed_accounts", alias="type"
+    )
     accounts: list[UUID] = Field(alias="accounts")
 
 

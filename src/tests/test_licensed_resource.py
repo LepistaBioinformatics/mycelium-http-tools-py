@@ -24,7 +24,9 @@ class TestLicensedResourceFromStr:
         account_name = "Test Account"
 
         # Encode account name
-        name_encoded = base64.b64encode(account_name.encode("utf-8")).decode("ascii")
+        name_encoded = base64.b64encode(account_name.encode("utf-8")).decode(
+            "ascii"
+        )
 
         # Construct URL path
         url_path = f"t/{tenant_id}/a/{account_id}/r/{role_id}?p={role_name}:{permission_code}&s={sys_value}&v={verified_value}&n={name_encoded}"
@@ -52,7 +54,9 @@ class TestLicensedResourceFromStr:
         account_name = "Editor User"
 
         # Encode account name
-        name_encoded = base64.b64encode(account_name.encode("utf-8")).decode("ascii")
+        name_encoded = base64.b64encode(account_name.encode("utf-8")).decode(
+            "ascii"
+        )
 
         # Construct URL path
         url_path = f"t/{tenant_id}/a/{account_id}/r/{role_id}?p={role_name}:{permission_code}&s={sys_value}&v={verified_value}&n={name_encoded}"
@@ -80,7 +84,9 @@ class TestLicensedResourceFromStr:
         account_name = "Test User with Special Chars: @#$%^&*()"
 
         # Encode account name
-        name_encoded = base64.b64encode(account_name.encode("utf-8")).decode("ascii")
+        name_encoded = base64.b64encode(account_name.encode("utf-8")).decode(
+            "ascii"
+        )
 
         # Construct URL path
         url_path = f"t/{tenant_id}/a/{account_id}/r/{role_id}?p={role_name}:{permission_code}&s={sys_value}&v={verified_value}&n={name_encoded}"
@@ -149,7 +155,9 @@ class TestLicensedResourceFromStr:
         """Test error when p parameter has invalid format"""
         url_path = "t/123e4567-e89b-12d3-a456-426614174000/a/987fcdeb-51a2-43d1-9f12-345678901234/r/456e7890-e89b-12d3-a456-426614174567?p=admin&s=1&v=1&n=dGVzdA=="
 
-        with pytest.raises(ValueError, match="Invalid permissioned role format"):
+        with pytest.raises(
+            ValueError, match="Invalid permissioned role format"
+        ):
             LicensedResource.from_str(url_path)
 
     def test_missing_s_parameter(self):
@@ -170,7 +178,9 @@ class TestLicensedResourceFromStr:
         """Test error when s parameter cannot be parsed as integer"""
         url_path = "t/123e4567-e89b-12d3-a456-426614174000/a/987fcdeb-51a2-43d1-9f12-345678901234/r/456e7890-e89b-12d3-a456-426614174567?p=admin:0&s=invalid&v=1&n=dGVzdA=="
 
-        with pytest.raises(ValueError, match="Failed to parse account standard"):
+        with pytest.raises(
+            ValueError, match="Failed to parse account standard"
+        ):
             LicensedResource.from_str(url_path)
 
     def test_missing_v_parameter(self):
@@ -191,7 +201,9 @@ class TestLicensedResourceFromStr:
         """Test error when v parameter cannot be parsed as integer"""
         url_path = "t/123e4567-e89b-12d3-a456-426614174000/a/987fcdeb-51a2-43d1-9f12-345678901234/r/456e7890-e89b-12d3-a456-426614174567?p=admin:0&s=1&v=invalid&n=dGVzdA=="
 
-        with pytest.raises(ValueError, match="Failed to parse account verification"):
+        with pytest.raises(
+            ValueError, match="Failed to parse account verification"
+        ):
             LicensedResource.from_str(url_path)
 
     def test_missing_n_parameter(self):
@@ -244,7 +256,9 @@ class TestLicensedResourceFromStr:
         account_name = "Usuário com Acentos: ção, ñ, ü"
 
         # Encode account name
-        name_encoded = base64.b64encode(account_name.encode("utf-8")).decode("ascii")
+        name_encoded = base64.b64encode(account_name.encode("utf-8")).decode(
+            "ascii"
+        )
 
         # Construct URL path
         url_path = f"t/{tenant_id}/a/{account_id}/r/{role_id}?p={role_name}:{permission_code}&s={sys_value}&v={verified_value}&n={name_encoded}"
@@ -265,7 +279,9 @@ class TestLicensedResourceFromStr:
         account_name = "A" * 1000  # Very long name
 
         # Encode account name
-        name_encoded = base64.b64encode(account_name.encode("utf-8")).decode("ascii")
+        name_encoded = base64.b64encode(account_name.encode("utf-8")).decode(
+            "ascii"
+        )
 
         # Construct URL path
         url_path = f"t/{tenant_id}/a/{account_id}/r/{role_id}?p={role_name}:{permission_code}&s={sys_value}&v={verified_value}&n={name_encoded}"
@@ -277,17 +293,28 @@ class TestLicensedResourceFromStr:
     def test_uuid_helper_method(self):
         """Test the _is_uuid helper method"""
         # Valid UUIDs
-        assert LicensedResource._is_uuid("123e4567-e89b-12d3-a456-426614174000") is True
-        assert LicensedResource._is_uuid("00000000-0000-0000-0000-000000000000") is True
-        assert LicensedResource._is_uuid("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF") is True
+        assert (
+            LicensedResource._is_uuid("123e4567-e89b-12d3-a456-426614174000")
+            is True
+        )
+        assert (
+            LicensedResource._is_uuid("00000000-0000-0000-0000-000000000000")
+            is True
+        )
+        assert (
+            LicensedResource._is_uuid("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF")
+            is True
+        )
 
         # Invalid UUIDs
         assert LicensedResource._is_uuid("invalid-uuid") is False
         assert LicensedResource._is_uuid("123") is False
         assert LicensedResource._is_uuid("") is False
         assert (
-            LicensedResource._is_uuid("123e4567-e89b-12d3-a456-42661417400") is False
+            LicensedResource._is_uuid("123e4567-e89b-12d3-a456-42661417400")
+            is False
         )  # Too short
         assert (
-            LicensedResource._is_uuid("123e4567-e89b-12d3-a456-4266141740000") is False
+            LicensedResource._is_uuid("123e4567-e89b-12d3-a456-4266141740000")
+            is False
         )  # Too long
