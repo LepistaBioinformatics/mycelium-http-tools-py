@@ -1,3 +1,9 @@
+## v0.1.0a7 (2025-12-02)
+
+### Fix
+
+- decode from base64 before parse profile from zstandard
+
 ## v0.1.0a6 (2025-11-28)
 
 ### Feat
